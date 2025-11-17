@@ -2,5 +2,7 @@ idf_component_register(
     SRCS
         "src/drv_temp_sensors.c"
     INCLUDE_DIRS "include"
-    REQUIRES core
+    REQUIRES core # consumers of this component also see core's headers
+    PRIV_REQUIRES
+    driver # internal dependency for driver/i2c.h, driver/gpio.h
 )
