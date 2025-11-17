@@ -27,5 +27,5 @@ void tasks_common_init_queues(void) {
     // If the queue fills up, newer writes will overwrite (depending on
     // task behavior), which is acceptable because old sensor data is
     // not useful for control decisions in a thermostat.
-    g_q_sensor_samples = xQueueCreate(8, sizeof(sensor_sample_t));
+    g_q_sensor_samples = xQueueCreate(1, sizeof(sensor_sample_t));
 }
