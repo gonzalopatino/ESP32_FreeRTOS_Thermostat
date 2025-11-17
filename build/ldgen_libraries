@@ -157,4 +157,8 @@ C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/rt/librt.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/spiffs/libspiffs.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/wifi_provisioning/libwifi_provisioning.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/json/libjson.a
+C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/core/libcore.a
+C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/app_thermostat/libapp_thermostat.a
+C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/core/libcore.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/main/libmain.a
+C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/app_thermostat/libapp_thermostat.a
