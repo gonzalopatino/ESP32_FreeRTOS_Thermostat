@@ -22,7 +22,17 @@
 #define LOG_BUFFER_LEN        256
 #define LOG_QUEUE_LENGTH      32
 
+//Control
+#define TASK_PRIO_CONTROL       5
+#define TASK_STACK_CONTROL      4096
+
+
+// Thermostat control parameters
+#define THERMOSTAT_SETPOINT_C       22.0f
+#define THERMOSTAT_HYSTERESIS_C      0.5f
+
 // Board pins
 #define LED_GPIO              2   // For heartbeat testing
+#define GPIO_HEAT_OUTPUT      4
 
 #endif

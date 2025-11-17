@@ -1,13 +1,14 @@
-#include "core/config.h"            // Global configuration constants (names, versions, stack sizes, etc.)
-#include "core/logging.h"           // Logging system (queue + Log_post)
-#include "core/error.h"             // Error handling utilities (faltal + non-fatal)
+#include "core/config.h"            // Global configuration: app name, version, stack sizes, priorities, periods
+#include "core/logging.h"           // Logging system (queue + log_post)
+#include "core/error.h"             // Error handling utilities (fatal + non-fatal)
 #include "core/watchdog.h"          // Watchdog framework for monitoring task health
 
-#include "app/task_common.h"        //Shared inter-task queues and helpers
+#include "app/task_common.h"        // Shared inter-task queues and helpers
 #include "app/task_sensors.h"       // Sensor task (temperature acquisition)
-
-#include "app/task_logger.h"        // Logger task (consumes Log queue)
+#include "app/task_logger.h"        // Logger task (consumes log queue)
 #include "app/task_heartbeat.h"     // Heartbeat task (LED blink + alive message)
+#include "app/task_control.h"       // Control task (hysteresis, heater output)
+
 
 /**
  * @brief Entry point of the application.
@@ -23,12 +24,12 @@
  *   - Launch tasks in the correct dependency order
  */
 void app_main(void) {
-    // Initialize Logging subsystem and create the Log queue
-    // Must be called early, before any task tries to Log messages.
+    // Initialize logging subsystem and create the log queue.
+    // Must be called early, before any task tries to log messages.
     logging_init();
 
     // Start watchdog system. If it fails (rare), abort immediately because
-    // running a system without a watchdog in production is unsafe
+    // running a system without a watchdog in production is unsafe.
     if (watchdog_init() != ESP_OK) {
         error_fatal(ERR_WATCHDOG_INIT_FAILED, "watchdog_init");
     }
@@ -40,7 +41,7 @@ void app_main(void) {
     // Emit startup message with application name and version.
     // Helpful for debugging, logs, and verifying firmware updates.
     log_post(LOG_LEVEL_INFO, "APP",
-        "%s v%s starting", APP_NAME, APP_FW_VERSION);
+             "%s v%s starting", APP_NAME, APP_FW_VERSION);
 
     // ------------------------------
     //      Task Startup Order
@@ -56,10 +57,13 @@ void app_main(void) {
     //    components (control, display, telemetry) rely on.
     task_sensors_start();
 
-    // 3. Start the heartbeat task last.
+    // 3. Start the control task (consumes samples + drives heater GPIO).
+    task_control_start();
+
+    // 4. Start the heartbeat task last.
     //    This task blinks the status LED and logs periodic
     //    "alive" messages, confirming the scheduler is running.
-    //    Additional tasks (control, display, telemetry) will
-    //    eventually be launched here as the system grows.
+    //    Additional tasks (display, telemetry, etc.) can be
+    //    launched here as the system grows.
     task_heartbeat_start();
 }
