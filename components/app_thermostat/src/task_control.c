@@ -15,6 +15,10 @@
 #include "app/task_common.h"      // g_q_sensor_samples
 #include "app/task_control.h"
 
+#include "core/thermostat_config.h"
+#include "core/thermostat.h"
+
+
 #include <stdio.h>                // snprintf
 
 static const char *TAG = "CONTROL";
@@ -97,6 +101,11 @@ static void task_control(void *arg) {
                 error_report(err, "thermostat_core_process_sample");
                 watchdog_feed();
                 continue;
+            }
+
+            //NEW: publish the state snapshot for UI / Telemetry
+            if (g_q_thermostat_state != NULL) {
+                xQueueOverwrite(g_q_thermostat_state, &th_state);
             }
 
             // Apply new output if it changed.

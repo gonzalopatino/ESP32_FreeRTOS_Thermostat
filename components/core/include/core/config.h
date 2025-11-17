@@ -73,4 +73,8 @@
 // Typical measurement time is around 80 ms, we wait a bit more for safety
 #define AHT20_MEASURE_DELAY_MS   100
 
+// Display/UI
+#define TASK_PRIO_DISPLAY 3
+#define TASK_STACK_DISPLAY 4096
+
 #endif  // CONFIG_H

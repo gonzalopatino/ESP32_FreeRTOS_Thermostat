@@ -12,6 +12,8 @@
 #include "core/thermostat.h"        // Thermostat core (decision logic)
 // #include "core/thermostat_config.h" // No longer needed here, core_init handles it
 
+#include "app/task_display.h"
+
 // Gonzalo Patino
 
 /**
@@ -70,6 +72,9 @@ void app_main(void) {
 
     // 3. Start the control task (consumes samples + drives heater GPIO).
     task_control_start();
+
+    //3 Start the display task
+    task_display_start();
 
     // 4. Start the heartbeat task last.
     //    This task blinks the status LED and logs periodic
