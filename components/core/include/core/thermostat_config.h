@@ -2,7 +2,7 @@
 #define THERMOSTAT_CONFIG_H
 
 #include "core/app_types.h"   // if you want app_error_t here
-
+#include "core/error.h"
 
 /**
  * @brief Structure holding thermostat control configuration.
