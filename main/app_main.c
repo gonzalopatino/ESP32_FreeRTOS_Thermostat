@@ -9,7 +9,7 @@
 #include "app/task_heartbeat.h"     // Heartbeat task (LED blink + alive message)
 #include "app/task_control.h"       // Control task (hysteresis, heater output)
 #include "core/thermostat_config.h" // Runtime thermostat configuration service
-
+//Gonzalo Patino
 
 /**
  * @brief Entry point of the application.
