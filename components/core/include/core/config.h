@@ -48,6 +48,17 @@
 #define GPIO_HEAT_OUTPUT      4   // Heater relay / output pin
 
 // -----------------------------------------------------------------------------
+// LCD 16x2 (HD44780) in 4-bit mode 
+// -----------------------------------------------------------------------------
+#define LCD_PIN_RS           16
+#define LCD_PIN_EN           17
+#define LCD_PIN_D4           18
+#define LCD_PIN_D5           19
+#define LCD_PIN_D6           23
+#define LCD_PIN_D7           25
+
+
+// -----------------------------------------------------------------------------
 // I2C master configuration for temperature sensor(s)
 // -----------------------------------------------------------------------------
 #define I2C_MASTER_SCL_IO        22          // ESP32 GPIO for I2C SCL
