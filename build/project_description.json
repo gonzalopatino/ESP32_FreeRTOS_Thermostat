@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "92e8e80-dirty",
+    "project_version":    "9ea5592-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",
@@ -36,7 +36,7 @@
             "type": "LIBRARY",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core" ],
-            "priv_reqs": [],
+            "priv_reqs": [ "esp_driver_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/app_thermostat/libapp_thermostat.a",
@@ -2950,7 +2950,7 @@
             "dir": "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core" ],
-            "priv_reqs": [],
+            "priv_reqs": [ "esp_driver_gpio" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "include_dirs": [ "include" ]

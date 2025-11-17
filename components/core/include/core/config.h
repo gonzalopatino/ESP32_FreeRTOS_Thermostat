@@ -10,4 +10,7 @@
 // Stack sizes
 #define TASK_STACK_HEARTBEAT  4096
 
+// Board pins
+#define LED_GPIO              2   // For heartbeat testing
+
 #endif
