@@ -4,7 +4,7 @@
 #include "esp_log.h"
 
 #define HEARTBEAT_GPIO GPIO_NUM_2   // Change this if your LED is on a different pin
-
+//Gonzalo
 static const char *TAG = "HEARTBEAT";
 
 static void heartbeat_task(void *arg)
