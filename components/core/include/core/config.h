@@ -50,12 +50,13 @@
 // -----------------------------------------------------------------------------
 // LCD 16x2 (HD44780) in 4-bit mode 
 // -----------------------------------------------------------------------------
-#define LCD_PIN_RS           16
-#define LCD_PIN_EN           17
-#define LCD_PIN_D4           18
-#define LCD_PIN_D5           19
-#define LCD_PIN_D6           23
-#define LCD_PIN_D7           25
+#define LCD_PIN_RS           32
+#define LCD_PIN_EN           33
+
+#define LCD_PIN_D4           25
+#define LCD_PIN_D5           26
+#define LCD_PIN_D6           27
+#define LCD_PIN_D7           14
 
 
 // -----------------------------------------------------------------------------

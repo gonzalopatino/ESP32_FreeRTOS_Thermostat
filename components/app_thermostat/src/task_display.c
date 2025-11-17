@@ -23,6 +23,8 @@ static const char *TAG = "DISPLAY";
  *  - Renders the most recent state on the LCD whenever it changes
  *  - Feeds the watchdog regularly
  */
+
+ 
 static void task_display(void *arg)
 {
     (void)arg;
