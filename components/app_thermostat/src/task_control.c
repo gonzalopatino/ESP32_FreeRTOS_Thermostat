@@ -12,6 +12,8 @@
 #include "app/task_common.h"   // g_q_sensor_samples
 #include "app/task_control.h"
 
+#include "core/thermostat_config.h"
+
 #include <stdio.h>  // for snprintf
 
 
@@ -105,8 +107,17 @@ static void task_control(void *arg) {
             float tin  = sample.temp_inside_c;
             float tout = sample.temp_outside_c;  // currently not used in logic, but useful for logs
 
-            float sp   = THERMOSTAT_SETPOINT_C;     // desired temperature
-            float hyst = THERMOSTAT_HYSTERESIS_C;   // hysteresis band
+            thermostat_config_t cfg;
+            if (thermostat_config_get(&cfg) != ERR_OK) {
+                // Fallback to compile time defaults if something is wrong.
+                cfg.setpoint_c   = THERMOSTAT_SETPOINT_C;
+                cfg.hysteresis_c = THERMOSTAT_HYSTERESIS_C;
+            }
+
+            // Use snapshot values
+            float sp   = cfg.setpoint_c;
+            float hyst = cfg.hysteresis_c;
+
 
             heat_state_t prev_state = heat_state;
 
@@ -142,7 +153,7 @@ static void task_control(void *arg) {
                     tin, tout, sp, hyst,
                     (heat_state == HEAT_ON) ? "HEAT_ON" : "HEAT_OFF");
 
-                log_post(LOG_LEVEL_INFO, TAG, "%s", msg_buf);
+                log_post(LOG_LEVEL_DEBUG, TAG, "%s", msg_buf);
             }
 
             // Feed watchdog after completing a control cycle.

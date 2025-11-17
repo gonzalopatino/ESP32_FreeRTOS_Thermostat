@@ -8,6 +8,7 @@
 #include "app/task_logger.h"        // Logger task (consumes log queue)
 #include "app/task_heartbeat.h"     // Heartbeat task (LED blink + alive message)
 #include "app/task_control.h"       // Control task (hysteresis, heater output)
+#include "core/thermostat_config.h"
 
 
 /**
@@ -37,6 +38,12 @@ void app_main(void) {
     // Create common queues used for inter-task communication.
     // Example: sensor samples → control task.
     tasks_common_init_queues();
+
+
+    err = thermostat_config_init(); 
+    if (thermostat_config_init() != ERR_OK) {
+        log_post(LOG_LEVEL_ERROR, "APP", "thermostat_config_init failed");
+    }
 
     // Emit startup message with application name and version.
     // Helpful for debugging, logs, and verifying firmware updates.
