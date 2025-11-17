@@ -6,7 +6,7 @@
 #include "core/error.h"
 #include "app/task_common.h"
 #include "drivers/drv_temp_sensors.h"
-
+//Gonzalo
 
 /**
  * @brief FreeRTOS task responsible for reading temperature sensors.
