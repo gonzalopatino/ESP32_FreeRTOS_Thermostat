@@ -17,6 +17,7 @@
 
 static const char *TAG = "CONTROL";
 
+//Gonzalo
 
 // Simple enum to represent heater output state.
 // This keeps logic readable and avoids using raw 0/1 magic values.
