@@ -158,8 +158,9 @@ $<TARGET_FILE:idf::spiffs>
 $<TARGET_FILE:idf::wifi_provisioning>
 $<TARGET_FILE:__idf_json>
 $<TARGET_FILE:idf::core>
-$<TARGET_FILE:idf::app_thermostat>
+$<TARGET_FILE:idf::drivers_thermostat>
 $<TARGET_FILE:__idf_core>
+$<TARGET_FILE:idf::app_thermostat>
+$<TARGET_FILE:__idf_drivers_thermostat>
 $<TARGET_FILE:idf::main>
 $<TARGET_FILE:__idf_app_thermostat>
-$<TARGET_FILE:idf::drivers_thermostat>

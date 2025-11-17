@@ -9629,9 +9629,9 @@ LOAD esp-idf/rt/librt.a
 LOAD esp-idf/spiffs/libspiffs.a
 LOAD esp-idf/wifi_provisioning/libwifi_provisioning.a
 LOAD esp-idf/core/libcore.a
+LOAD esp-idf/drivers_thermostat/libdrivers_thermostat.a
 LOAD esp-idf/app_thermostat/libapp_thermostat.a
 LOAD esp-idf/main/libmain.a
-LOAD esp-idf/drivers_thermostat/libdrivers_thermostat.a
 LOAD esp-idf/app_trace/libapp_trace.a
 LOAD esp-idf/unity/libunity.a
 LOAD esp-idf/esp_https_server/libesp_https_server.a
@@ -9641,6 +9641,7 @@ LOAD esp-idf/console/libconsole.a
 LOAD esp-idf/protobuf-c/libprotobuf-c.a
 LOAD esp-idf/json/libjson.a
 LOAD esp-idf/app_thermostat/libapp_thermostat.a
+LOAD esp-idf/drivers_thermostat/libdrivers_thermostat.a
 LOAD esp-idf/core/libcore.a
 LOAD esp-idf/xtensa/libxtensa.a
 LOAD esp-idf/esp_driver_gpio/libesp_driver_gpio.a
