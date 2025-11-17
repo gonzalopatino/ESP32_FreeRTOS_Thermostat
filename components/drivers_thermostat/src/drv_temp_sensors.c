@@ -17,7 +17,7 @@
  */
 
 app_error_t drv_temp_sensors_init(void) {
-    // Later: unit I2C, ADC, actual sensor chips
+    // Later: init I2C, ADC, actual sensor chips
     log_post(LOG_LEVEL_INFO, 
         "DRV_TS", 
         "Temperature snesors init stub");
@@ -28,10 +28,17 @@ app_error_t drv_temp_sensors_init(void) {
 /**
  * @brief Read indoor and outdoor temperatures.
  *
- * This is a **fake data generator** used while hardware drivers are not
+ * This is a fake data generator used while hardware drivers are not
  * implemented yet. It simulates smoothly changing temperatures to
  * allow the rest of the system (control logic, display, telemetry)
  * to be developed and tested independently.
+ *
+ * The indoor temperature is swept between 21.0 C and 23.5 C in small
+ * steps so that it crosses both:
+ *   - setpoint - hysteresis  (21.5 C for sp=22.0, hyst=0.5)
+ *   - setpoint + hysteresis  (22.5 C for sp=22.0, hyst=0.5)
+ *
+ * This lets the CONTROL task exercise both HEAT_ON and HEAT_OFF paths.
  *
  * @param[out] out_sample  Pointer to a sample structure filled by this function.
  *
@@ -39,7 +46,7 @@ app_error_t drv_temp_sensors_init(void) {
  *         ERR_GENERIC if out_sample is NULL.
  */
 
-app_error_t drv_temp_read (sensor_sample_t *out_sample) {
+app_error_t drv_temp_read(sensor_sample_t *out_sample) {
     if (!out_sample) {
         return ERR_GENERIC; // Invalid argument protection
     }
@@ -48,23 +55,32 @@ app_error_t drv_temp_read (sensor_sample_t *out_sample) {
     //
     // These static variables keep their values between calls,
     // simulating slowly changing indoor/outdoor temperatures.
-    static float tin = 21.5f;
+    static float tin  = 21.0f;
     static float tout = 10.0f;
 
-     // Simulate indoor temperature drifting up, then wrapping
-    tin += 0.1f;
-    if (tin > 24.0f) {
-        tin = 21.5f;
+    // Configuration of the fake ramp
+    const float TIN_MIN   = 21.0f;
+    const float TIN_MAX   = 23.5f;
+    const float TIN_STEP  = 0.10f;
+
+    const float TOUT_MIN  = 10.0f;
+    const float TOUT_MAX  = 12.0f;
+    const float TOUT_STEP = 0.05f;
+
+    // Simulate indoor temperature drifting up, then wrapping
+    tin += TIN_STEP;
+    if (tin > TIN_MAX) {
+        tin = TIN_MIN;
     }
 
     // Simulate outdoor temperature with smaller drift
-    tout += 0.05f;
-    if (tout > 12.0f) {
-        tout = 10.0f;
+    tout += TOUT_STEP;
+    if (tout > TOUT_MAX) {
+        tout = TOUT_MIN;
     }
 
     // Fill the output structure with the fake sensor data
-    out_sample->temp_inside_c = tin;
+    out_sample->temp_inside_c  = tin;
     out_sample->temp_outside_c = tout;
 
     // Timestamp using FreeRTOS tick counter (converted to ms)
