@@ -8,8 +8,11 @@
 #include "app/task_logger.h"        // Logger task (consumes log queue)
 #include "app/task_heartbeat.h"     // Heartbeat task (LED blink + alive message)
 #include "app/task_control.h"       // Control task (hysteresis, heater output)
-#include "core/thermostat_config.h" // Runtime thermostat configuration service
-//Gonzalo Patino
+
+#include "core/thermostat.h"        // Thermostat core (decision logic)
+// #include "core/thermostat_config.h" // No longer needed here, core_init handles it
+
+// Gonzalo Patino
 
 /**
  * @brief Entry point of the application.
@@ -21,7 +24,7 @@
  * High-level responsibilities:
  *   - Bring up logging and watchdog services
  *   - Create shared queues used by multiple tasks
- *   - Initialize thermostat configuration
+ *   - Initialize thermostat core (which loads configuration)
  *   - Emit startup information (name, version)
  *   - Launch tasks in the correct dependency order
  */
@@ -40,11 +43,10 @@ void app_main(void) {
     // Example: sensor samples → control task.
     tasks_common_init_queues();
 
-    // Initialize thermostat configuration (setpoint + hysteresis).
-    // If this fails, treat it as a serious error.
-    app_error_t err = thermostat_config_init();
-    if (err != ERR_OK) {
-        error_fatal(err, "thermostat_config_init");
+    // Initialize thermostat core (which also initializes thermostat_config
+    // and loads setpoint + hysteresis from defaults or stored values).
+    if (thermostat_core_init() != ERR_OK) {
+        error_fatal(ERR_GENERIC, "thermostat_core_init");
     }
 
     // Emit startup message with application name and version.

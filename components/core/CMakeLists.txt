@@ -4,5 +4,9 @@ idf_component_register(
         "src/error.c"
         "src/watchdog.c"
         "src/thermostat_config.c"
+        "src/thermostat.c"
     INCLUDE_DIRS "include"
+    REQUIRES
+        freertos
+        esp_system
 )
