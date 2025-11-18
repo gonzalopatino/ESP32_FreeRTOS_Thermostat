@@ -36,8 +36,8 @@ app_error_t thermostat_core_init(void)
 
     // Initialize internal state.
     // Fow now, use HEAT MODE only so behavior matches your current hardware
-    s_state.mode         = THERMOSTAT_MODE_AUTO;          // simple heating system
-    s_state.output       = THERMOSTAT_OUTPUT_OFF;    // never start with heater ON
+    s_state.mode         = THERMOSTAT_MODE_HEAT;      // default
+    s_state.output       = THERMOSTAT_OUTPUT_OFF;     // never start ON
     s_state.setpoint_c   = cfg.setpoint_c;
     s_state.hysteresis_c = cfg.hysteresis_c;
     s_state.tin_c        = 0.0f;
@@ -47,7 +47,7 @@ app_error_t thermostat_core_init(void)
     s_initialized = true;
 
     log_post(LOG_LEVEL_INFO, TAG,
-             "Core init: mode=HEAT sp=%.2fC hyst=%.2fC",
+             "Core init: mode=AUTO sp=%.2fC hyst=%.2fC",
              s_state.setpoint_c, s_state.hysteresis_c);
 
     return ERR_OK;
@@ -92,58 +92,61 @@ app_error_t thermostat_core_process_sample(
     thermostat_mode_t mode = s_state.mode;
 
     switch (mode) {
-    case THERMOSTAT_MODE_OFF:
-        // System completely off
-        output = THERMOSTAT_OUTPUT_OFF;
-        break;
 
-    case THERMOSTAT_MODE_HEAT:
-        // Heating hysteresis:
-        //  - If Tin < (sp - hyst): HEAT_ON
-        //  - If Tin > (sp + hyst): OFF
-        //  - Else: keep previous output inside band
-        if (tin < (sp - hyst)) {
-            output = THERMOSTAT_OUTPUT_HEAT_ON;
-        } else if (tin > (sp + hyst)) {
+        case THERMOSTAT_MODE_OFF:
+            // Everything off regardless of temperature.
             output = THERMOSTAT_OUTPUT_OFF;
-        } else {
-            // Inside deadband: keep previous output
-        }
-        break;
+            break;
 
-    case THERMOSTAT_MODE_COOL:
-        // Cooling hysteresis:
-        //  - If Tin > (sp + hyst): COOL_ON
-        //  - If Tin < (sp - hyst): OFF
-        //  - Else: keep previous output inside band
-        if (tin > (sp + hyst)) {
-            output = THERMOSTAT_OUTPUT_COOL_ON;
-        } else if (tin < (sp - hyst)) {
+        case THERMOSTAT_MODE_HEAT:
+            // Heating hysteresis:
+            //  Tin < (sp - hyst)  -> HEAT_ON
+            //  Tin > (sp + hyst)  -> OFF
+            //  otherwise          -> keep output
+            if (tin < (sp - hyst)) {
+                output = THERMOSTAT_OUTPUT_HEAT_ON;
+            } else if (tin > (sp + hyst)) {
+                output = THERMOSTAT_OUTPUT_OFF;
+            } else {
+                // inside band: keep output
+            }
+            break;
+
+        case THERMOSTAT_MODE_COOL:
+            // Cooling hysteresis:
+            //  Tin > (sp + hyst)  -> COOL_ON
+            //  Tin < (sp - hyst)  -> OFF
+            //  otherwise          -> keep output
+            if (tin > (sp + hyst)) {
+                output = THERMOSTAT_OUTPUT_COOL_ON;
+            } else if (tin < (sp - hyst)) {
+                output = THERMOSTAT_OUTPUT_OFF;
+            } else {
+                // inside band: keep output
+            }
+            break;
+
+        case THERMOSTAT_MODE_AUTO:
+            // Symmetric auto band:
+            //  Tin < (sp - hyst)  -> HEAT_ON
+            //  Tin > (sp + hyst)  -> COOL_ON
+            //  otherwise          -> OFF
+            if (tin < (sp - hyst)) {
+                output = THERMOSTAT_OUTPUT_HEAT_ON;
+            } else if (tin > (sp + hyst)) {
+                output = THERMOSTAT_OUTPUT_COOL_ON;
+            } else {
+                output = THERMOSTAT_OUTPUT_OFF;
+            }
+            break;
+
+        default:
+            // Fail safe
             output = THERMOSTAT_OUTPUT_OFF;
-        } else {
-            // Inside deadband: keep previous output
+            break;
         }
-        break;
 
-    case THERMOSTAT_MODE_AUTO:
-        // Future: Auto mode could choose HEAT vs COOL depending on season.
-        // For now, simple symmetric band:
-        if (tin < (sp - hyst)) {
-            output = THERMOSTAT_OUTPUT_HEAT_ON;
-        } else if (tin > (sp + hyst)) {
-            output = THERMOSTAT_OUTPUT_COOL_ON;
-        } else {
-            output = THERMOSTAT_OUTPUT_OFF;
-        }
-        break;
-
-    default:
-        // Unknown mode, fail-safe: turn everything off.
-        output = THERMOSTAT_OUTPUT_OFF;
-        break;
-    }
-
-    // Update internal snapshot.
+    // Update snapshot
     s_state.setpoint_c   = sp;
     s_state.hysteresis_c = hyst;
     s_state.tin_c        = tin;
@@ -152,11 +155,81 @@ app_error_t thermostat_core_process_sample(
     s_state.output       = output;
     s_state.mode         = mode;
 
+    
+
     // Mode remains whatever was last set (only HEAT for now).
     // In the future, UI / MQTT could call a mode setter.
 
     // Return copy to caller.
     *out_state = s_state;
 
+    return ERR_OK;
+}
+
+/**
+ * @brief Set the operating mode (OFF / HEAT / COOL / AUTO).
+ */
+
+// -----------------------------------------------------------------------------
+// Mode and state access API
+// -----------------------------------------------------------------------------
+
+app_error_t thermostat_set_mode(thermostat_mode_t mode)
+{
+    if (!s_initialized) {
+        log_post(LOG_LEVEL_ERROR, TAG, "thermostat_set_mode called before init");
+        return ERR_GENERIC;
+    }
+
+    switch (mode) {
+    case THERMOSTAT_MODE_OFF:
+    case THERMOSTAT_MODE_HEAT:
+    case THERMOSTAT_MODE_COOL:
+    case THERMOSTAT_MODE_AUTO:
+        // valid modes
+        s_state.mode = mode;
+
+        // In OFF mode, force outputs OFF immediately
+        if (mode == THERMOSTAT_MODE_OFF) {
+            s_state.output = THERMOSTAT_OUTPUT_OFF;
+        }
+
+        log_post(LOG_LEVEL_INFO, TAG, "Mode set to %d", (int)mode);
+        return ERR_OK;
+
+    default:
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "thermostat_set_mode: invalid mode=%d", (int)mode);
+        return ERR_GENERIC;
+    }
+}
+
+/**
+ * @brief Get current operating mode.
+ */
+thermostat_mode_t thermostat_get_mode(void)
+{
+    if (!s_initialized) {
+        return THERMOSTAT_MODE_OFF;
+    }
+    return s_state.mode;
+}
+
+/**
+ * @brief Get a snapshot of the current thermostat state.
+ *
+ * Thread-safe in the sense that s_state is only updated inside the core
+ * and this function returns a simple struct copy.
+ */
+app_error_t thermostat_get_state_snapshot(thermostat_state_t *out_state)
+{
+    if (!out_state) {
+        return ERR_GENERIC;
+    }
+    if (!s_initialized) {
+        return ERR_GENERIC;
+    }
+
+    *out_state = s_state;
     return ERR_OK;
 }

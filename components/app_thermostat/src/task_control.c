@@ -67,22 +67,22 @@ static void apply_outputs(thermostat_output_t output)
     int cool_level = 0;
 
     switch (output) {
-    case THERMOSTAT_OUTPUT_HEAT_ON:
-        heat_level = 1;
-        cool_level = 0;
-        break;
+        case THERMOSTAT_OUTPUT_HEAT_ON:
+            heat_level = 1;
+            cool_level = 0;
+            break;
 
-    case THERMOSTAT_OUTPUT_COOL_ON:
-        heat_level = 0;
-        cool_level = 1;
-        break;
+        case THERMOSTAT_OUTPUT_COOL_ON:
+            heat_level = 0;
+            cool_level = 1;
+            break;
 
-    case THERMOSTAT_OUTPUT_OFF:
-    default:
-        heat_level = 0;
-        cool_level = 0;
-        break;
-    }
+        case THERMOSTAT_OUTPUT_OFF:
+        default:
+            heat_level = 0;
+            cool_level = 0;
+            break;
+        }
 
     gpio_set_level(GPIO_HEAT_OUTPUT, heat_level);
     gpio_set_level(GPIO_COOL_OUTPUT, cool_level);

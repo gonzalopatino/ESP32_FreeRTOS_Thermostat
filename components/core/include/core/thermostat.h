@@ -24,13 +24,16 @@ typedef enum {
 /**
  * @brief Output command from the thermostat brain.
  *
- * This is deliberately abstract: the CONTROL task will translate this
- * to GPIO, relays, LEDs, etc.
+ * This is abstract. The CONTROL task decides how to map these to GPIO/relays.
+ *
+ * For now:
+ *  - Heater is driven only when THERMOSTAT_OUTPUT_HEAT_ON.
+ *  - COOL outputs are "no-op" until you wire an AC output pin.
  */
 typedef enum {
-    THERMOSTAT_OUTPUT_OFF      = 0,
-    THERMOSTAT_OUTPUT_HEAT_ON  = 1,
-    THERMOSTAT_OUTPUT_COOL_ON  = 2,
+    THERMOSTAT_OUTPUT_OFF = 0,
+    THERMOSTAT_OUTPUT_HEAT_ON,
+    THERMOSTAT_OUTPUT_COOL_ON
 } thermostat_output_t;
 
 /**
@@ -40,7 +43,7 @@ typedef enum {
  *  - temperatures
  *  - config (setpoint, hysteresis)
  *  - operating mode
- *  - current output (heat on/off)
+ *  - current output (heat/cool on/off)
  */
 typedef struct {
     thermostat_mode_t   mode;          // e.g., HEAT, OFF
@@ -76,12 +79,35 @@ app_error_t thermostat_core_init(void);
  * @param[in]  sample     Latest sensor reading (Tin/Tout/timestamp)
  * @param[out] out_state  Snapshot of updated thermostat state
  *
- * @return ERR_OK on success, ERR_GENERIC if arguments are invalid
- *         or the module was not initialized.
+ * @return ERR_OK on success, ERR_GENERIC on invalid args or uninitialized core.
  */
 app_error_t thermostat_core_process_sample(
     const sensor_sample_t *sample,
     thermostat_state_t    *out_state
 );
+
+/**
+ * @brief Set the operating mode (OFF / HEAT / COOL / AUTO).
+ *
+ * Safe to call from tasks such as:
+ *  - buttons task
+ *  - MQTT command handler
+ *  - UI task
+ *
+ * @param mode New mode to apply.
+ * @return ERR_OK on success, ERR_GENERIC if core not initialized or mode invalid.
+ */
+app_error_t thermostat_set_mode(thermostat_mode_t mode);
+
+/**
+ * @brief Get a snapshot of the current thermostat state.
+ *
+ * Useful for UI or telemetry tasks that want the latest state without
+ * waiting on a queue.
+ *
+ * @param[out] out_state Caller-allocated struct to receive the snapshot.
+ * @return ERR_OK on success, ERR_GENERIC if out_state is NULL or core not initialized.
+ */
+app_error_t thermostat_get_state(thermostat_state_t *out_state);
 
 #endif  // THERMOSTAT_H

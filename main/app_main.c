@@ -87,4 +87,6 @@ void app_main(void) {
     //    Additional tasks (display, telemetry, etc.) can be
     //    launched here as the system grows.
     task_heartbeat_start();
+
+    thermostat_set_mode(THERMOSTAT_MODE_AUTO);
 }
