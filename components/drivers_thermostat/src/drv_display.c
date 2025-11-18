@@ -218,6 +218,7 @@ app_error_t drv_display_show_state(const thermostat_state_t *state)
     } else if (state->output == THERMOSTAT_OUTPUT_COOL_ON) {
         out_str = "COn";
     }
+    
 
 
     // Line 1: setpoint, hysteresis, mode / output
