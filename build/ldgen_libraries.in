@@ -13,13 +13,12 @@ $<TARGET_FILE:__idf_esp_system>
 $<TARGET_FILE:__idf_xtensa>
 $<TARGET_FILE:__idf_spi_flash>
 $<TARGET_FILE:__idf_bootloader_support>
-$<TARGET_FILE:__idf_mbedtls>
-$<TARGET_FILE:__idf_esp_pm>
-$<TARGET_FILE:__idf_esp_driver_gpio>
-$<TARGET_FILE:__idf_esp_timer>
 $<TARGET_FILE:__idf_lwip>
 $<TARGET_FILE:__idf_vfs>
+$<TARGET_FILE:__idf_esp_timer>
 $<TARGET_FILE:__idf_esp_driver_uart>
+$<TARGET_FILE:__idf_esp_pm>
+$<TARGET_FILE:__idf_esp_driver_gpio>
 $<TARGET_FILE:__idf_esp_ringbuf>
 $<TARGET_FILE:__idf_esp_mm>
 $<TARGET_FILE:idf::vfs>
@@ -60,7 +59,6 @@ $<TARGET_FILE:__idf_esp-tls>
 $<TARGET_FILE:__idf_http_parser>
 $<TARGET_FILE:__idf_esp_http_server>
 $<TARGET_FILE:__idf_nvs_flash>
-$<TARGET_FILE:idf::mbedtls>
 $<TARGET_FILE:__idf_esp_wifi>
 $<TARGET_FILE:__idf_esp_phy>
 $<TARGET_FILE:__idf_esp_netif>

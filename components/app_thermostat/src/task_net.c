@@ -23,29 +23,40 @@ static int s_retry_count = 0;
 static bool s_wifi_ready    = false;   // NEW: got IP
 static bool s_sent_telemetry = false;  // NEW: only send once
 
+
+
 static void net_send_test_telemetry(void)
 {
-    // Use the exact URL that worked in Postman
     const char *url =
-        "https://gonzaping-e2b5g2fuavc0bcbn.canadacentral-01.azurewebsites.net/api/telemetry";
+        "http://gonzaping-e2b5g2fuavc0bcbn.canadacentral-01.azurewebsites.net/api/telemetry";
 
-    const char *json_body =
+    char json_body[128];
+    int len = snprintf(
+        json_body,
+        sizeof(json_body),
         "{"
-        "\"device_id\":\"esp32-thermostat\","
-        "\"tin_c\":27.8,"
-        "\"setpoint_c\":22"
-        "}";
+            "\"device_id\":\"esp32-thermostat\","
+            "\"tin_c\":%.2f,"
+            "\"setpoint_c\":%.2f"
+        "}",
+        27.8,   // TODO: replace with real Tin from sensors
+        22.0    // TODO: replace with real setpoint
+    );
+
+    if (len <= 0 || len >= sizeof(json_body)) {
+        log_post(LOG_LEVEL_ERROR, TAG, "Failed to build telemetry JSON");
+        return;
+    }
 
     esp_http_client_config_t cfg = {
-        .url        = url,
-        .method     = HTTP_METHOD_POST,
-        .timeout_ms = 5000,
-        // .cert_pem = NULL  // use IDF's default cert bundle
+        .url = url,
+        .method = HTTP_METHOD_POST,
+        .disable_auto_redirect = true
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&cfg);
-    if (client == NULL) {
-        log_post(LOG_LEVEL_ERROR, TAG, "esp_http_client_init failed");
+    if (!client) {
+        log_post(LOG_LEVEL_ERROR, TAG, "HTTP client init failed");
         return;
     }
 
@@ -55,17 +66,22 @@ static void net_send_test_telemetry(void)
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
         int status = esp_http_client_get_status_code(client);
-        int len    = esp_http_client_get_content_length(client);
+        long long content_len = esp_http_client_get_content_length(client);
+
         log_post(LOG_LEVEL_INFO, TAG,
-                 "Telemetry POST done, status=%d, content_length=%d",
-                 status, len);
+                 "Telemetry POST OK, status=%d len=%lld",
+                 status, content_len);
     } else {
         log_post(LOG_LEVEL_ERROR, TAG,
-                 "Telemetry POST failed: %s", esp_err_to_name(err));
+                 "Telemetry POST failed: %s",
+                 esp_err_to_name(err));
     }
 
     esp_http_client_cleanup(client);
 }
+
+
+
 
 
 /**

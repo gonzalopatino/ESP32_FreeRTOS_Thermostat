@@ -13,13 +13,12 @@ C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_system/libesp
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/xtensa/libxtensa.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/spi_flash/libspi_flash.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/bootloader_support/libbootloader_support.a
-C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/mbedtls/libmbedtls.a
-C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_pm/libesp_pm.a
-C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_driver_gpio/libesp_driver_gpio.a
-C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_timer/libesp_timer.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/lwip/liblwip.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/vfs/libvfs.a
+C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_timer/libesp_timer.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_driver_uart/libesp_driver_uart.a
+C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_pm/libesp_pm.a
+C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_driver_gpio/libesp_driver_gpio.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_ringbuf/libesp_ringbuf.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_mm/libesp_mm.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/vfs/libvfs.a
@@ -60,7 +59,6 @@ C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp-tls/libesp-tl
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/http_parser/libhttp_parser.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_http_server/libesp_http_server.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/nvs_flash/libnvs_flash.a
-C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/mbedtls/libmbedtls.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_wifi/libesp_wifi.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_phy/libesp_phy.a
 C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/esp_netif/libesp_netif.a

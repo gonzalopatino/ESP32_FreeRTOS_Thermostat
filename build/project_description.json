@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "be7fe4b-dirty",
+    "project_version":    "1f9f666-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",
@@ -1278,15 +1278,15 @@
             "target": "___idf_mbedtls",
             "prefix": "idf",
             "dir": "C:/Espressif/frameworks/esp-idf-v5.5.1/components/mbedtls",
-            "type": "LIBRARY",
+            "type": "CONFIG_ONLY",
             "lib": "__idf_mbedtls",
             "reqs": [],
             "priv_reqs": [ "soc", "esp_hw_support", "esp_pm" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/mbedtls/libmbedtls.a",
-            "sources": [ "C:/Espressif/frameworks/esp-idf-v5.5.1/components/mbedtls/esp_crt_bundle/esp_crt_bundle.c", "C:/Users/coleg/Documents/esp_projects/thermostat/build/x509_crt_bundle.S" ],
-            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library", "esp_crt_bundle/include" ]
+            "file": "",
+            "sources": [],
+            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library" ]
         },
         "mqtt": {
             "alias": "idf::mqtt",
@@ -2632,7 +2632,7 @@
             "priv_reqs": [ "soc", "esp_hw_support", "esp_pm" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library", "esp_crt_bundle/include" ]
+            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library" ]
         },
         "mqtt": {
             "alias": "idf::mqtt",

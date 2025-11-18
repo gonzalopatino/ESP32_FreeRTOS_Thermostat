@@ -87,7 +87,6 @@ static void cycle_mode(void)
         break;
     case THERMOSTAT_MODE_AUTO:
         next = THERMOSTAT_MODE_HEAT;
-        break;
     default:
         next = THERMOSTAT_MODE_HEAT;
         break;
