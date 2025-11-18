@@ -220,7 +220,7 @@ app_error_t drv_display_show_state(const thermostat_state_t *state)
     }
 
 
-     // Line 1: setpoint, hysteresis, mode / output
+    // Line 1: setpoint, hysteresis, mode / output
     // Example: "Sp:22 H:0.5 HOn"
     snprintf(line1, sizeof(line1),
              "Sp:%2.0f H:%1.1f %c%s",
