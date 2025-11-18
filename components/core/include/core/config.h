@@ -74,6 +74,9 @@
 #define GPIO_BTN_UP              25   // pick your actual pin
 #define GPIO_BTN_DOWN            26   // pick your actual pin
 
+// New: mode button to cycle HEAT / COOL / OFF
+#define GPIO_BTN_MODE            27
+
 // Queue length for button events
 #define BUTTON_EVENT_QUEUE_LEN   8
 

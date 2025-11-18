@@ -207,12 +207,20 @@ app_error_t thermostat_set_mode(thermostat_mode_t mode)
 /**
  * @brief Get current operating mode.
  */
-thermostat_mode_t thermostat_get_mode(void)
+app_error_t thermostat_get_mode(thermostat_mode_t *out_mode)
 {
-    if (!s_initialized) {
-        return THERMOSTAT_MODE_OFF;
+    if (out_mode == NULL) {
+        return ERR_GENERIC;
     }
-    return s_state.mode;
+
+    if (!s_initialized) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "thermostat_get_mode called before init");
+        return ERR_GENERIC;
+    }
+
+    *out_mode = s_state.mode;
+    return ERR_OK;
 }
 
 /**

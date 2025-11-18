@@ -18,7 +18,12 @@ static button_event_t gpio_to_event(gpio_num_t gpio)
 {
     if (gpio == GPIO_BTN_UP) {
         return BUTTON_EVENT_UP;
+    } else if (gpio == GPIO_BTN_DOWN) {
+        return BUTTON_EVENT_DOWN;
+    } else if (gpio == GPIO_BTN_MODE) {
+        return BUTTON_EVENT_MODE;
     } else {
+        // Fallback: treat as DOWN (should not happen if wiring is correct).
         return BUTTON_EVENT_DOWN;
     }
 }
@@ -53,7 +58,10 @@ app_error_t drv_buttons_init(void)
 
     // Configure both pins as inputs with pull-ups and falling-edge interrupts
     gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << GPIO_BTN_UP) | (1ULL << GPIO_BTN_DOWN),
+        .pin_bit_mask =
+            (1ULL << GPIO_BTN_UP)   |
+            (1ULL << GPIO_BTN_DOWN) |
+            (1ULL << GPIO_BTN_MODE),
         .mode         = GPIO_MODE_INPUT,
         .pull_up_en   = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -74,22 +82,39 @@ app_error_t drv_buttons_init(void)
         return ERR_GENERIC;
     }
 
-    // Attach ISR handlers
-    err = gpio_isr_handler_add(GPIO_BTN_UP,   button_isr_handler, (void *)(intptr_t)GPIO_BTN_UP);
+    // Attach ISR handlers for each button
+    err = gpio_isr_handler_add(GPIO_BTN_UP,
+                               button_isr_handler,
+                               (void *)(intptr_t)GPIO_BTN_UP);
     if (err != ESP_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG, "gpio_isr_handler_add(UP) failed, err=%d", (int)err);
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "gpio_isr_handler_add(UP) failed, err=%d", (int)err);
         return ERR_GENERIC;
     }
 
-    err = gpio_isr_handler_add(GPIO_BTN_DOWN, button_isr_handler, (void *)(intptr_t)GPIO_BTN_DOWN);
+    err = gpio_isr_handler_add(GPIO_BTN_DOWN,
+                               button_isr_handler,
+                               (void *)(intptr_t)GPIO_BTN_DOWN);
     if (err != ESP_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG, "gpio_isr_handler_add(DOWN) failed, err=%d", (int)err);
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "gpio_isr_handler_add(DOWN) failed, err=%d", (int)err);
+        return ERR_GENERIC;
+    }
+
+    err = gpio_isr_handler_add(GPIO_BTN_MODE,
+                               button_isr_handler,
+                               (void *)(intptr_t)GPIO_BTN_MODE);
+    if (err != ESP_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "gpio_isr_handler_add(MODE) failed, err=%d", (int)err);
         return ERR_GENERIC;
     }
 
     log_post(LOG_LEVEL_INFO, TAG,
-             "Buttons initialized (UP=%d, DOWN=%d)",
-             (int)GPIO_BTN_UP, (int)GPIO_BTN_DOWN);
+             "Buttons initialized (UP=%d, DOWN=%d, MODE=%d)",
+             (int)GPIO_BTN_UP,
+             (int)GPIO_BTN_DOWN,
+             (int)GPIO_BTN_MODE);
 
     return ERR_OK;
 }

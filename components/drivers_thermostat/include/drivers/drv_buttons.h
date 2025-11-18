@@ -11,16 +11,21 @@
  */
 typedef enum {
     BUTTON_EVENT_UP = 0,
-    BUTTON_EVENT_DOWN
+    BUTTON_EVENT_DOWN,
+    BUTTON_EVENT_MODE
 } button_event_t;
 
+
+
 /**
- * @brief Initialize button hardware and create event queue.
+ * @brief Initialize GPIOs and ISR for buttons, create event queue.
  *
- * Configures GPIOs, attaches interrupts, and creates an internal
- * FreeRTOS queue where ISR will post button_event_t values.
+ * @param[out] out_queue Queue handle that will receive button_event_t
+ * 
+ * 
  */
-app_error_t drv_buttons_init(void);
+
+ app_error_t drv_buttons_init(void);
 
 /**
  * @brief Get handle to the internal button event queue.

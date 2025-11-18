@@ -99,6 +99,8 @@ app_error_t thermostat_core_process_sample(
  */
 app_error_t thermostat_set_mode(thermostat_mode_t mode);
 
+app_error_t thermostat_get_mode(thermostat_mode_t *out_mode);
+
 /**
  * @brief Get a snapshot of the current thermostat state.
  *
