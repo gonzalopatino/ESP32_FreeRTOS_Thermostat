@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "02234f1-dirty",
+    "project_version":    "be7fe4b-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",
@@ -36,7 +36,7 @@
             "type": "LIBRARY",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core", "drivers_thermostat" ],
-            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash", "esp_http_client", "esp_system" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/app_thermostat/libapp_thermostat.a",
@@ -2965,7 +2965,7 @@
             "dir": "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core", "drivers_thermostat" ],
-            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash", "esp_http_client", "esp_system" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "include_dirs": [ "include" ]

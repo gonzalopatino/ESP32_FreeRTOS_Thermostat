@@ -2,12 +2,15 @@
 #define ERROR_H
 
 typedef enum {
+    
     ERR_OK = 0,
     ERR_GENERIC = 1,
     ERR_WATCHDOG_INIT_FAILED = 2,
     ERR_QUEUE_CREATE_FAILED = 3,
+    
+   
     // Add more error codes as needed
-
+    
 } app_error_t;
 
 // Non fatal error reporting
