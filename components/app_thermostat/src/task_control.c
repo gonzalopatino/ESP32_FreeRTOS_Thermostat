@@ -35,8 +35,14 @@ static const char *TAG = "CONTROL";
  * or an equivalent board configuration header.
  */
 static void control_gpio_init(void) {
+
+    uint64_t mask =
+        (1ULL << GPIO_HEAT_OUTPUT) |
+        (1ULL << GPIO_COOL_OUTPUT);
+
+
     gpio_config_t io_conf = {
-        .pin_bit_mask = 1ULL << GPIO_HEAT_OUTPUT,   // Select heater control pin
+        .pin_bit_mask = mask,   // Select heater control pin
         .mode         = GPIO_MODE_OUTPUT,           // Output mode
         .pull_up_en   = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
