@@ -124,6 +124,7 @@ app_error_t drv_display_init(void)
     return ERR_OK;
 }
 
+/*
 app_error_t drv_display_show_state(const thermostat_state_t *s)
 {
     (void)s;
@@ -137,4 +138,18 @@ app_error_t drv_display_show_state(const thermostat_state_t *s)
     lcd_write_string("Hello, GonzA!");
 
     return ERR_OK;
+} */
+
+app_error_t drv_display_show_state(const thermostat_state_t *state)
+{
+    (void)state;  // ignore state while debugging
+
+     lcd_cmd(0x01);
+    lcd_set_cursor(0, 0);
+    lcd_write_string("Hello, GonzA!  ");
+    lcd_set_cursor(1, 0);
+    lcd_write_string("LCD TEST 000000");
+
+    return ERR_OK;
 }
+

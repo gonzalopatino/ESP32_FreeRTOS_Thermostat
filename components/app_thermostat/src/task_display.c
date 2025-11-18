@@ -24,7 +24,7 @@ static const char *TAG = "DISPLAY";
  *  - Feeds the watchdog regularly
  */
 
- 
+/*
 static void task_display(void *arg)
 {
     (void)arg;
@@ -39,7 +39,36 @@ static void task_display(void *arg)
         log_post(LOG_LEVEL_ERROR, TAG,
                  "drv_display_init failed, err=%d", (int)err);
         // We do NOT fatal here, because the rest of the system
-        // (control, sensors, etc.) can still keep running.
+        // (control, sensors, etc.) can still keep running.static void task_display(void *arg)
+{
+    (void)arg;
+
+    watchdog_register_current("DISPLAY");
+
+    app_error_t err = drv_display_init();
+    if (err != ERR_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "drv_display_init failed, err=%d", (int)err);
+        // Still continue, just in case.
+    }
+
+    int counter = 0;
+
+    while (1) {
+        // Simple test: alternate between two known patterns
+        log_post(LOG_LEVEL_INFO, TAG,
+                 "DISPLAY test update #%d", counter++);
+
+        // You can add a dedicated "test" function in the driver, but for now:
+        thermostat_state_t dummy = {0};
+        drv_display_show_state(&dummy);  // but *make it ignore state* for now,
+                                         // and just print a fixed pattern.
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        watchdog_feed();
+    }
+}
+
     }
 
     thermostat_state_t state;
@@ -55,6 +84,37 @@ static void task_display(void *arg)
         }
 
         // Feed watchdog after each update cycle.
+        watchdog_feed();
+    }
+}
+*/
+
+static void task_display(void *arg)
+{
+    (void)arg;
+
+    watchdog_register_current("DISPLAY");
+
+    app_error_t err = drv_display_init();
+    if (err != ERR_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "drv_display_init failed, err=%d", (int)err);
+        // Still continue, just in case.
+    }
+
+    int counter = 0;
+
+    while (1) {
+        // Simple test: alternate between two known patterns
+        log_post(LOG_LEVEL_INFO, TAG,
+                 "DISPLAY test update #%d", counter++);
+
+        // You can add a dedicated "test" function in the driver, but for now:
+        thermostat_state_t dummy = {0};
+        drv_display_show_state(&dummy);  // but *make it ignore state* for now,
+                                         // and just print a fixed pattern.
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
         watchdog_feed();
     }
 }
