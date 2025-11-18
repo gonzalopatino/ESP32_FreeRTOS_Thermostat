@@ -10,7 +10,7 @@
 #include "core/logging.h"
 #include "esp_system.h"
 
-
+#include "esp_crt_bundle.h"   // <- add this
 
 
 #include "core/watchdog.h"
@@ -51,7 +51,10 @@ static void net_send_test_telemetry(void)
     esp_http_client_config_t cfg = {
         .url = url,
         .method = HTTP_METHOD_POST,
-        .disable_auto_redirect = true
+        .transport_type = HTTP_TRANSPORT_OVER_SSL,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        // let redirects happen normally
+        //.disable_auto_redirect = false,  // or just remove the field
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&cfg);

@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "1f9f666-dirty",
+    "project_version":    "a397adc-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",
@@ -36,7 +36,7 @@
             "type": "LIBRARY",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core", "drivers_thermostat" ],
-            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash", "esp_http_client", "esp_system" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash", "esp_http_client", "esp_system", "mbedtls" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/app_thermostat/libapp_thermostat.a",
@@ -1278,15 +1278,15 @@
             "target": "___idf_mbedtls",
             "prefix": "idf",
             "dir": "C:/Espressif/frameworks/esp-idf-v5.5.1/components/mbedtls",
-            "type": "CONFIG_ONLY",
+            "type": "LIBRARY",
             "lib": "__idf_mbedtls",
             "reqs": [],
             "priv_reqs": [ "soc", "esp_hw_support", "esp_pm" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "file": "",
-            "sources": [],
-            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library" ]
+            "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/mbedtls/libmbedtls.a",
+            "sources": [ "C:/Espressif/frameworks/esp-idf-v5.5.1/components/mbedtls/esp_crt_bundle/esp_crt_bundle.c", "C:/Users/coleg/Documents/esp_projects/thermostat/build/x509_crt_bundle.S" ],
+            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library", "esp_crt_bundle/include" ]
         },
         "mqtt": {
             "alias": "idf::mqtt",
@@ -2632,7 +2632,7 @@
             "priv_reqs": [ "soc", "esp_hw_support", "esp_pm" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library" ]
+            "include_dirs": [ "port/include", "mbedtls/include", "mbedtls/library", "esp_crt_bundle/include" ]
         },
         "mqtt": {
             "alias": "idf::mqtt",
@@ -2965,7 +2965,7 @@
             "dir": "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core", "drivers_thermostat" ],
-            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash", "esp_http_client", "esp_system" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash", "esp_http_client", "esp_system", "mbedtls" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "include_dirs": [ "include" ]
