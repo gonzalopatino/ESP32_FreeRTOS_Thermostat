@@ -3,6 +3,7 @@
 #include "core/config.h"    // LCD_PIN_RS, LCD_PIN_EN, LCD_PIN_D4..D7, LCD_ROWS, LCD_COLS
 #include "core/logging.h"   // log_post
 #include "core/error.h"     // app_error_t, ERR_OK, ERR_GENERIC
+#include "core/thermostat.h"
 
 #include "driver/gpio.h"
 #include "esp_rom_sys.h"
@@ -196,17 +197,39 @@ app_error_t drv_display_show_state(const thermostat_state_t *state)
              state->tin_c,
              state->tout_c);
 
-    const char *out_str =
-        (state->output == THERMOSTAT_OUTPUT_HEAT_ON) ? "ON" : "OFF";
+           
 
-    // Line 1: setpoint, hysteresis, output
+    // Map mode to short 1-letter label.
+    char mode_char = 'O';  // Off
+    switch (state->mode) {
+    case THERMOSTAT_MODE_HEAT: mode_char = 'H'; break;
+    case THERMOSTAT_MODE_COOL: mode_char = 'C'; break;
+    case THERMOSTAT_MODE_AUTO: mode_char = 'A'; break;
+    case THERMOSTAT_MODE_OFF:
+    default:
+        mode_char = 'O';
+        break;
+    }
+
+    // Map output to short string.
+    const char *out_str = "OFF";
+    if (state->output == THERMOSTAT_OUTPUT_HEAT_ON) {
+        out_str = "HOn";
+    } else if (state->output == THERMOSTAT_OUTPUT_COOL_ON) {
+        out_str = "COn";
+    }
+
+
+     // Line 1: setpoint, hysteresis, mode / output
+    // Example: "Sp:22 H:0.5 HOn"
     snprintf(line1, sizeof(line1),
-             "Sp:%2.1f H:%1.1f %s",
+             "Sp:%2.0f H:%1.1f %c%s",
              state->setpoint_c,
              state->hysteresis_c,
+             mode_char,
              out_str);
 
-    // Log exactly what we intend to show on LCD
+    // Log exactly what we intend to show on LCD (truncated to LCD_COLS for safety).
     log_post(LOG_LEVEL_INFO, TAG,
              "LCD lines -> \"%.*s\" | \"%.*s\"",
              LCD_COLS, line0,
