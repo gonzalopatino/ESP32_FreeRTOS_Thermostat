@@ -105,6 +105,13 @@ static void task_control(void *arg) {
 
             //NEW: publish the state snapshot for UI / Telemetry
             if (g_q_thermostat_state != NULL) {
+                log_post(LOG_LEVEL_DEBUG, TAG,
+                    "Publishing state to DISPLAY: Tin=%.2f Tout=%.2f sp=%.2f hyst=%.2f out=%d",
+                    th_state.tin_c,
+                    th_state.tout_c,
+                    th_state.setpoint_c,
+                    th_state.hysteresis_c,
+                    (int)th_state.output);
                 xQueueOverwrite(g_q_thermostat_state, &th_state);
             }
 

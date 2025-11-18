@@ -14,108 +14,43 @@
 
 static const char *TAG = "DISPLAY";
 
-/**
- * @brief Display task: subscribes to thermostat_state_t and renders it.
- *
- * This task:
- *  - Initializes the LCD driver once at startup
- *  - Blocks waiting for new thermostat_state_t messages on g_q_thermostat_state
- *  - Renders the most recent state on the LCD whenever it changes
- *  - Feeds the watchdog regularly
- */
-
-/*
 static void task_display(void *arg)
 {
     (void)arg;
 
-    // Register this task with watchdog so lockups can be detected.
+    // Register this task in the watchdog
     watchdog_register_current("DISPLAY");
+    log_post(LOG_LEVEL_INFO, TAG, "DISPLAY task starting");
 
-    // Initialize LCD driver hardware. If this fails, we log an error
-    // and keep running the task, but nothing will be drawn.
-    app_error_t err = drv_display_init();
-    if (err != ERR_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG,
-                 "drv_display_init failed, err=%d", (int)err);
-        // We do NOT fatal here, because the rest of the system
-        // (control, sensors, etc.) can still keep running.static void task_display(void *arg)
-{
-    (void)arg;
-
-    watchdog_register_current("DISPLAY");
-
-    app_error_t err = drv_display_init();
-    if (err != ERR_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG,
-                 "drv_display_init failed, err=%d", (int)err);
-        // Still continue, just in case.
-    }
-
-    int counter = 0;
-
-    while (1) {
-        // Simple test: alternate between two known patterns
-        log_post(LOG_LEVEL_INFO, TAG,
-                 "DISPLAY test update #%d", counter++);
-
-        // You can add a dedicated "test" function in the driver, but for now:
-        thermostat_state_t dummy = {0};
-        drv_display_show_state(&dummy);  // but *make it ignore state* for now,
-                                         // and just print a fixed pattern.
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        watchdog_feed();
-    }
-}
-
+    if (drv_display_init() != ERR_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG, "LCD init failed");
+        // Bail out but keep feeding watchdog slowly
+        while (1) {
+            watchdog_feed();
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
     }
 
     thermostat_state_t state;
+    
 
     while (1) {
-        // Wait for the next state update from thermostat core.
+        // Block until CONTROL publishes a new state
         if (xQueueReceive(g_q_thermostat_state, &state, portMAX_DELAY) == pdTRUE) {
 
-            // If init succeeded, this will render Tin/Tout/setpoint/output
-            // on the LCD. If init failed earlier, drv_display_show_state
-            // should ideally be safe to call and simply return an error.
+            log_post(LOG_LEVEL_DEBUG, TAG,
+                     "DISPLAY got state: Tin=%.2f Tout=%.2f sp=%.2f hyst=%.2f out=%d",
+                     state.tin_c,
+                     state.tout_c,
+                     state.setpoint_c,
+                     state.hysteresis_c,
+                     (int)state.output);
+
+            // Render that state to the LCD
             drv_display_show_state(&state);
+
+            watchdog_feed();
         }
-
-        // Feed watchdog after each update cycle.
-        watchdog_feed();
-    }
-}
-*/
-
-static void task_display(void *arg)
-{
-    (void)arg;
-
-    watchdog_register_current("DISPLAY");
-
-    app_error_t err = drv_display_init();
-    if (err != ERR_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG,
-                 "drv_display_init failed, err=%d", (int)err);
-        // Still continue, just in case.
-    }
-
-    int counter = 0;
-
-    while (1) {
-        // Simple test: alternate between two known patterns
-        log_post(LOG_LEVEL_INFO, TAG,
-                 "DISPLAY test update #%d", counter++);
-
-        // You can add a dedicated "test" function in the driver, but for now:
-        thermostat_state_t dummy = {0};
-        drv_display_show_state(&dummy);  // but *make it ignore state* for now,
-                                         // and just print a fixed pattern.
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        watchdog_feed();
     }
 }
 

@@ -6,6 +6,7 @@
 
 #include "core/app_types.h"     // sensor_sample_t
 #include "core/thermostat.h"    // thermostat_state_t
+#include "core/error.h"
 
 // Queue of latest sensor samples (producer: SENSORS, consumer: CONTROL)
 extern QueueHandle_t g_q_sensor_samples;
