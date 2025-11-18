@@ -45,18 +45,26 @@
 // Board pins
 // -----------------------------------------------------------------------------
 #define LED_GPIO              2   // Heartbeat LED
-#define GPIO_HEAT_OUTPUT      4   // Heater relay / output pin
+#define GPIO_HEAT_OUTPUT      12   // Heater relay / output pin
 
 // -----------------------------------------------------------------------------
 // LCD 16x2 (HD44780) in 4-bit mode 
 // -----------------------------------------------------------------------------
-#define LCD_PIN_RS           32
-#define LCD_PIN_EN           33
+// #define LCD_PIN_RS           32
+// #define LCD_PIN_EN           33
 
-#define LCD_PIN_D4           25
-#define LCD_PIN_D5           26
-#define LCD_PIN_D6           27
-#define LCD_PIN_D7           14
+// #define LCD_PIN_D4           25
+// #define LCD_PIN_D5           26
+// #define LCD_PIN_D6           27
+// #define LCD_PIN_D7           14
+
+#define LCD_PIN_RS           19
+#define LCD_PIN_EN           18
+
+#define LCD_PIN_D4           5
+#define LCD_PIN_D5           17
+#define LCD_PIN_D6           16
+#define LCD_PIN_D7           4
 
 
 // -----------------------------------------------------------------------------
