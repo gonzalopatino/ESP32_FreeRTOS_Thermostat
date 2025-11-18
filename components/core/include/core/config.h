@@ -66,6 +66,27 @@
 #define LCD_PIN_D6           16
 #define LCD_PIN_D7           4
 
+// -----------------------------------------------------------------------------
+// Buttons 
+// -----------------------------------------------------------------------------
+// Up/down buttons to adjust setpoint
+#define GPIO_BTN_UP              25   // pick your actual pin
+#define GPIO_BTN_DOWN            26   // pick your actual pin
+
+// Queue length for button events
+#define BUTTON_EVENT_QUEUE_LEN   8
+
+// Setpoint adjustment step and limits
+#define THERMOSTAT_SP_STEP_C     0.5f
+#define THERMOSTAT_SP_MIN_C      15.0f
+#define THERMOSTAT_SP_MAX_C      28.0f
+
+// Button debounce time (in ms)
+#define BUTTON_DEBOUNCE_MS       200
+
+// Task for button handling
+#define TASK_PRIO_BUTTONS        4
+#define TASK_STACK_BUTTONS       4096
 
 // -----------------------------------------------------------------------------
 // I2C master configuration for temperature sensor(s)

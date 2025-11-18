@@ -14,6 +14,8 @@
 
 #include "app/task_display.h"
 
+#include "app/task_buttons.h"
+
 // Gonzalo Patino
 
 /**
@@ -72,6 +74,9 @@ void app_main(void) {
 
     // 3. Start the control task (consumes samples + drives heater GPIO).
     task_control_start();
+
+    // Buttons start
+    task_buttons_start();
 
     //3 Start the display task
     task_display_start();

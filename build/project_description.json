@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "1309cd3-dirty",
+    "project_version":    "b54d979-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",
@@ -40,7 +40,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/app_thermostat/libapp_thermostat.a",
-            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_heartbeat.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_logger.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_common.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_sensors.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_control.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_display.c" ],
+            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_heartbeat.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_logger.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_common.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_sensors.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_control.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_display.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_buttons.c" ],
             "include_dirs": [ "include" ]
         },
         "app_trace": {
@@ -205,7 +205,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/drivers_thermostat/libdrivers_thermostat.a",
-            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/drivers_thermostat/src/drv_temp_sensors.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/drivers_thermostat/src/drv_display.c" ],
+            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/drivers_thermostat/src/drv_temp_sensors.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/drivers_thermostat/src/drv_display.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/drivers_thermostat/src/drv_buttons.c" ],
             "include_dirs": [ "include" ]
         },
         "efuse": {
