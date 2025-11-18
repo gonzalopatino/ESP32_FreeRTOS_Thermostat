@@ -20308,9 +20308,10 @@ LOAD C:/Espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/..
                                  0x78 (size before relaxing)
                 0x400d743c                thermostat_config_set
  .text.thermostat_core_init
-                0x400d74a8       0x7c esp-idf/core/libcore.a(thermostat.c.obj)
-                                 0x84 (size before relaxing)
+                0x400d74a8       0x7a esp-idf/core/libcore.a(thermostat.c.obj)
+                                 0x82 (size before relaxing)
                 0x400d74a8                thermostat_core_init
+ *fill*         0x400d7522        0x2 
  .text.thermostat_core_process_sample
                 0x400d7524       0xe3 esp-idf/core/libcore.a(thermostat.c.obj)
                                  0xe7 (size before relaxing)
@@ -21321,6 +21322,7 @@ LOAD C:/Espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/..
  .text.watchdog_feed
                 0x400e8bec        0x7 esp-idf/core/libcore.a(watchdog.c.obj)
                 0x400e8bec                watchdog_feed
+ *fill*         0x400e8bf3        0x0 
  *fill*         0x400e8bf3        0x0 
  *fill*         0x400e8bf3        0x0 
  *fill*         0x400e8bf3        0x0 

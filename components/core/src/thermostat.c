@@ -36,7 +36,7 @@ app_error_t thermostat_core_init(void)
 
     // Initialize internal state.
     // Fow now, use HEAT MODE only so behavior matches your current hardware
-    s_state.mode         = THERMOSTAT_MODE_COOL;          // simple heating system
+    s_state.mode         = THERMOSTAT_MODE_OFF;          // simple heating system
     s_state.output       = THERMOSTAT_OUTPUT_OFF;    // never start with heater ON
     s_state.setpoint_c   = cfg.setpoint_c;
     s_state.hysteresis_c = cfg.hysteresis_c;
