@@ -17,7 +17,8 @@
 typedef enum {
     THERMOSTAT_MODE_OFF  = 0,
     THERMOSTAT_MODE_HEAT = 1,
-    // THERMOSTAT_MODE_COOL = 2,   // placeholder for future
+    THERMOSTAT_MODE_COOL = 2,
+    THERMOSTAT_MODE_AUTO = 3, //Reserved /future
 } thermostat_mode_t;
 
 /**
@@ -27,8 +28,9 @@ typedef enum {
  * to GPIO, relays, LEDs, etc.
  */
 typedef enum {
-    THERMOSTAT_OUTPUT_HEAT_OFF = 0,
+    THERMOSTAT_OUTPUT_OFF      = 0,
     THERMOSTAT_OUTPUT_HEAT_ON  = 1,
+    THERMOSTAT_OUTPUT_COOL_ON  = 2,
 } thermostat_output_t;
 
 /**

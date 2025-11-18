@@ -46,6 +46,7 @@
 // -----------------------------------------------------------------------------
 #define LED_GPIO              2   // Heartbeat LED
 #define GPIO_HEAT_OUTPUT      12   // Heater relay / output pin
+#define GPIO_COOL_OUTPUT      33   // Heater relay / output pin
 
 // -----------------------------------------------------------------------------
 // LCD 16x2 (HD44780) in 4-bit mode 

@@ -35,8 +35,9 @@ app_error_t thermostat_core_init(void)
     }
 
     // Initialize internal state.
+    // Fow now, use HEAT MODE only so behavior matches your current hardware
     s_state.mode         = THERMOSTAT_MODE_HEAT;          // simple heating system
-    s_state.output       = THERMOSTAT_OUTPUT_HEAT_OFF;    // never start with heater ON
+    s_state.output       = THERMOSTAT_OUTPUT_OFF;    // never start with heater ON
     s_state.setpoint_c   = cfg.setpoint_c;
     s_state.hysteresis_c = cfg.hysteresis_c;
     s_state.tin_c        = 0.0f;
@@ -88,23 +89,58 @@ app_error_t thermostat_core_process_sample(
 
     // Start from previous output to preserve hysteresis behavior.
     thermostat_output_t output = s_state.output;
+    thermostat_mode_t mode = s_state.mode;
 
-    if (s_state.mode == THERMOSTAT_MODE_OFF) {
-        // In OFF mode, heater is always off regardless of temperature.
-        output = THERMOSTAT_OUTPUT_HEAT_OFF;
+    switch (mode) {
+    case THERMOSTAT_MODE_OFF:
+        // System completely off
+        output = THERMOSTAT_OUTPUT_OFF;
+        break;
 
-    } else if (s_state.mode == THERMOSTAT_MODE_HEAT) {
-        // Heating hysteresis rule:
-        //  - If Tin < (sp - hyst): heater ON
-        //  - If Tin > (sp + hyst): heater OFF
-        //  - Else: keep previous output (inside deadband)
+    case THERMOSTAT_MODE_HEAT:
+        // Heating hysteresis:
+        //  - If Tin < (sp - hyst): HEAT_ON
+        //  - If Tin > (sp + hyst): OFF
+        //  - Else: keep previous output inside band
         if (tin < (sp - hyst)) {
             output = THERMOSTAT_OUTPUT_HEAT_ON;
         } else if (tin > (sp + hyst)) {
-            output = THERMOSTAT_OUTPUT_HEAT_OFF;
+            output = THERMOSTAT_OUTPUT_OFF;
         } else {
-            // Inside deadband, do not flip output.
+            // Inside deadband: keep previous output
         }
+        break;
+
+    case THERMOSTAT_MODE_COOL:
+        // Cooling hysteresis:
+        //  - If Tin > (sp + hyst): COOL_ON
+        //  - If Tin < (sp - hyst): OFF
+        //  - Else: keep previous output inside band
+        if (tin > (sp + hyst)) {
+            output = THERMOSTAT_OUTPUT_COOL_ON;
+        } else if (tin < (sp - hyst)) {
+            output = THERMOSTAT_OUTPUT_OFF;
+        } else {
+            // Inside deadband: keep previous output
+        }
+        break;
+
+    case THERMOSTAT_MODE_AUTO:
+        // Future: Auto mode could choose HEAT vs COOL depending on season.
+        // For now, simple symmetric band:
+        if (tin < (sp - hyst)) {
+            output = THERMOSTAT_OUTPUT_HEAT_ON;
+        } else if (tin > (sp + hyst)) {
+            output = THERMOSTAT_OUTPUT_COOL_ON;
+        } else {
+            output = THERMOSTAT_OUTPUT_OFF;
+        }
+        break;
+
+    default:
+        // Unknown mode, fail-safe: turn everything off.
+        output = THERMOSTAT_OUTPUT_OFF;
+        break;
     }
 
     // Update internal snapshot.
@@ -114,6 +150,7 @@ app_error_t thermostat_core_process_sample(
     s_state.tout_c       = tout;
     s_state.timestamp_ms = sample->timestamp_ms;
     s_state.output       = output;
+    s_state.mode         = mode;
 
     // Mode remains whatever was last set (only HEAT for now).
     // In the future, UI / MQTT could call a mode setter.
