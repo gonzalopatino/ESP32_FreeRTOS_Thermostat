@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "661ccdd-dirty",
+    "project_version":    "f87be85-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",
@@ -36,11 +36,11 @@
             "type": "LIBRARY",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core", "drivers_thermostat" ],
-            "priv_reqs": [ "esp_driver_gpio" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/app_thermostat/libapp_thermostat.a",
-            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_heartbeat.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_logger.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_common.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_sensors.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_control.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_display.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_buttons.c" ],
+            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_heartbeat.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_logger.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_common.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_sensors.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_control.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_display.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_buttons.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat/src/task_net.c" ],
             "include_dirs": [ "include" ]
         },
         "app_trace": {
@@ -2965,7 +2965,7 @@
             "dir": "C:/Users/coleg/Documents/esp_projects/thermostat/components/app_thermostat",
             "lib": "__idf_app_thermostat",
             "reqs": [ "core", "drivers_thermostat" ],
-            "priv_reqs": [ "esp_driver_gpio" ],
+            "priv_reqs": [ "esp_driver_gpio", "esp_wifi", "esp_netif", "nvs_flash" ],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "include_dirs": [ "include" ]

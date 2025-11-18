@@ -7,7 +7,14 @@ idf_component_register(
         "src/task_control.c"
         "src/task_display.c"
         "src/task_buttons.c"
+        "src/task_net.c"
     INCLUDE_DIRS "include"
-    REQUIRES core drivers_thermostat
-    PRIV_REQUIRES esp_driver_gpio
+    REQUIRES 
+        core
+        drivers_thermostat
+    PRIV_REQUIRES 
+        esp_driver_gpio
+        esp_wifi
+        esp_netif
+        nvs_flash
 )

@@ -16,6 +16,8 @@
 
 #include "app/task_buttons.h"
 
+#include "app/task_net.h"
+
 // Gonzalo Patino
 
 /**
@@ -52,6 +54,9 @@ void app_main(void) {
     if (thermostat_core_init() != ERR_OK) {
         error_fatal(ERR_GENERIC, "thermostat_core_init");
     }
+
+    // Start NET (Wi-Fi) before any task that might need connectivity.
+    task_net_start();
 
     // Emit startup message with application name and version.
     // Helpful for debugging, logs, and verifying firmware updates.

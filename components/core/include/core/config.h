@@ -122,4 +122,23 @@
 #define TASK_PRIO_DISPLAY 3
 #define TASK_STACK_DISPLAY 4096
 
+
+
+// -----------------------------------------------------------------------------
+// Wi-Fi / Network
+// -----------------------------------------------------------------------------
+// Replace with your real SSID and password
+#define WIFI_SSID           "DUPA_2_4_G"
+#define WIFI_PASS           "6045270435"
+
+// Number of reconnect attempts before giving up (for now just log)
+#define WIFI_MAX_RETRY      5
+
+// NET task
+#define TASK_PRIO_NET       4
+#define TASK_STACK_NET      4096
+
+
+
+
 #endif  // CONFIG_H
