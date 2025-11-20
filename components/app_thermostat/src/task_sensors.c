@@ -6,6 +6,9 @@
 #include "core/error.h"
 #include "app/task_common.h"
 #include "drivers/drv_temp_sensors.h"
+
+#include "core/timeutil.h" //for real time clock (RTO)
+
 //Gonzalo
 
 /**
@@ -55,11 +58,23 @@ static void task_sensors(void *arg) {
             }
 
             // Log raw sensor readings for debugging / calibration
-            log_post(LOG_LEVEL_DEBUG, "SENSORS",
-                     "Tin=%.2fC Tout=%.2fC t=%lu ms",
-                     sample.temp_inside_c,
-                     sample.temp_outside_c,
-                     (unsigned long)sample.timestamp_ms);
+            char iso[32];
+            if(timeutil_get_iso8601(iso, sizeof(iso))){
+                log_post(LOG_LEVEL_DEBUG, "SENSORS",
+                    "Tin=%.2fC Tout=%.2fC t=%lu ms local=%s",
+                    sample.temp_inside_c,
+                    sample.temp_outside_c,
+                    (unsigned long)sample.timestamp_ms,
+                    iso);
+            } else {
+                //Time not set yet, log without Local time
+                log_post(LOG_LEVEL_DEBUG, "SENSORS",
+                    "Tin=%.2fC Tout=%.2fC t=%lu ms (no RTC yet)",
+                    sample.temp_inside_c,
+                    sample.temp_outside_c,
+                    (unsigned long)sample.timestamp_ms);
+            }
+ 
 
         } else {
             // If driver fails, report non-fatal error (logged only)

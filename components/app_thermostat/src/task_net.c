@@ -17,6 +17,9 @@
 #include "esp_http_client.h"
 #include "app/task_net.h"
 
+#include "core/timeutil.h"
+
+
 static const char *TAG = "NET";
 
 static int s_retry_count = 0;
@@ -112,6 +115,8 @@ static void wifi_event_handler(void *arg,
         }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         log_post(LOG_LEVEL_INFO, TAG, "Wi-Fi connected, got IP address");
+        log_post(LOG_LEVEL_INFO, TAG, "Starting SNTP...");
+        timeutil_init_sntp();
         s_retry_count    = 0;
         s_wifi_ready     = true;   // NEW
         s_sent_telemetry = false;  // allow send once per connection

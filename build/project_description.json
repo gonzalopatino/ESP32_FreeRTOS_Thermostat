@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "2b33aed-dirty",
+    "project_version":    "c72d3e5-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",
@@ -155,12 +155,12 @@
             "dir": "C:/Users/coleg/Documents/esp_projects/thermostat/components/core",
             "type": "LIBRARY",
             "lib": "__idf_core",
-            "reqs": [ "freertos", "esp_system" ],
+            "reqs": [ "freertos", "esp_system", "log", "lwip", "esp_netif" ],
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "C:/Users/coleg/Documents/esp_projects/thermostat/build/esp-idf/core/libcore.a",
-            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/logging.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/error.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/watchdog.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/thermostat_config.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/thermostat.c" ],
+            "sources": [ "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/logging.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/error.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/watchdog.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/thermostat_config.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/thermostat.c", "C:/Users/coleg/Documents/esp_projects/thermostat/components/core/src/timeutil.c" ],
             "include_dirs": [ "include" ]
         },
         "cxx": {
@@ -2976,7 +2976,7 @@
             "prefix": "idf",
             "dir": "C:/Users/coleg/Documents/esp_projects/thermostat/components/core",
             "lib": "__idf_core",
-            "reqs": [ "freertos", "esp_system" ],
+            "reqs": [ "freertos", "esp_system", "log", "lwip", "esp_netif" ],
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
