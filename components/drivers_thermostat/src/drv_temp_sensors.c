@@ -262,7 +262,7 @@ static esp_err_t aht20_raw_to_temp_c(const uint8_t *buf, float *out_temp_c)
  *
  * Called once from the SENSORS task during startup.
  *
- * @return ERR_OK on success, ERR_GENERIC on failure.
+ * @return APP_ERR_OK on success, ERR_GENERIC on failure.
  */
 app_error_t drv_temp_sensors_init(void)
 {
@@ -285,7 +285,7 @@ app_error_t drv_temp_sensors_init(void)
     log_post(LOG_LEVEL_INFO, TAG,
              "Temperature sensors initialized, AHT20 ready");
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 
@@ -302,7 +302,7 @@ app_error_t drv_temp_sensors_init(void)
  *
  * @param[out] out_sample Pointer to caller-allocated sensor_sample_t.
  *
- * @return ERR_OK on success, ERR_GENERIC on invalid args or hardware errors.
+ * @return APP_ERR_OK on success, ERR_GENERIC on invalid args or hardware errors.
  */
 app_error_t drv_temp_read(sensor_sample_t *out_sample)
 {
@@ -341,5 +341,5 @@ app_error_t drv_temp_read(sensor_sample_t *out_sample)
     out_sample->timestamp_ms =
         (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }

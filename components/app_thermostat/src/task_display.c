@@ -22,7 +22,7 @@ static void task_display(void *arg)
     watchdog_register_current("DISPLAY");
     log_post(LOG_LEVEL_INFO, TAG, "DISPLAY task starting");
 
-    if (drv_display_init() != ERR_OK) {
+    if (drv_display_init() != APP_ERR_OK) {
         log_post(LOG_LEVEL_ERROR, TAG, "LCD init failed");
         // Bail out but keep feeding watchdog slowly
         while (1) {

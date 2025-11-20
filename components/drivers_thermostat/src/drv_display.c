@@ -130,7 +130,7 @@ static void lcd_set_cursor(uint8_t row, uint8_t col)
 app_error_t drv_display_init(void)
 {
     if (s_lcd_initialized) {
-        return ERR_OK;
+        return APP_ERR_OK;
     }
 
     lcd_gpio_init();
@@ -139,7 +139,7 @@ app_error_t drv_display_init(void)
     s_lcd_initialized = true;
     log_post(LOG_LEVEL_INFO, TAG, "LCD initialized (ROM-delay driver)");
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 app_error_t drv_display_clear(void)
@@ -151,7 +151,7 @@ app_error_t drv_display_clear(void)
     lcd_cmd(0x01);
     // lcd_send already includes the long delay for 0x01, but we keep code explicit
     esp_rom_delay_us(2000);
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 app_error_t drv_display_write_line(uint8_t row, const char *text)
@@ -179,7 +179,7 @@ app_error_t drv_display_write_line(uint8_t row, const char *text)
         i++;
     }
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 app_error_t drv_display_show_state(const thermostat_state_t *state)
@@ -239,5 +239,5 @@ app_error_t drv_display_show_state(const thermostat_state_t *state)
     drv_display_write_line(0, line0);
     drv_display_write_line(1, line1);
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }

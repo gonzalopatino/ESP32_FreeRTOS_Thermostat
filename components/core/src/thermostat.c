@@ -21,7 +21,7 @@ app_error_t thermostat_core_init(void)
 
     // Bring up the config subsystem (NVS / defaults / etc.).
     err = thermostat_config_init();
-    if (err != ERR_OK) {
+    if (err != APP_ERR_OK) {
         log_post(LOG_LEVEL_ERROR, TAG,
                  "thermostat_config_init failed, err=%d", (int)err);
         return err;
@@ -29,7 +29,7 @@ app_error_t thermostat_core_init(void)
 
     // Try to read current config; if this fails, fall back to compile-time defaults.
     err = thermostat_config_get(&cfg);
-    if (err != ERR_OK) {
+    if (err != APP_ERR_OK) {
         cfg.setpoint_c   = THERMOSTAT_SETPOINT_C;
         cfg.hysteresis_c = THERMOSTAT_HYSTERESIS_C;
     }
@@ -50,7 +50,7 @@ app_error_t thermostat_core_init(void)
              "Core init: mode=AUTO sp=%.2fC hyst=%.2fC",
              s_state.setpoint_c, s_state.hysteresis_c);
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 /**
@@ -76,7 +76,7 @@ app_error_t thermostat_core_process_sample(
 
     thermostat_config_t cfg;
     app_error_t err = thermostat_config_get(&cfg);
-    if (err != ERR_OK) {
+    if (err != APP_ERR_OK) {
         // Fall back to compile-time defaults if config read fails.
         cfg.setpoint_c   = THERMOSTAT_SETPOINT_C;
         cfg.hysteresis_c = THERMOSTAT_HYSTERESIS_C;
@@ -163,7 +163,7 @@ app_error_t thermostat_core_process_sample(
     // Return copy to caller.
     *out_state = s_state;
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 /**
@@ -195,7 +195,7 @@ app_error_t thermostat_set_mode(thermostat_mode_t mode)
         }
 
         log_post(LOG_LEVEL_INFO, TAG, "Mode set to %d", (int)mode);
-        return ERR_OK;
+        return APP_ERR_OK;
 
     default:
         log_post(LOG_LEVEL_ERROR, TAG,
@@ -220,7 +220,7 @@ app_error_t thermostat_get_mode(thermostat_mode_t *out_mode)
     }
 
     *out_mode = s_state.mode;
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 /**
@@ -239,5 +239,5 @@ app_error_t thermostat_get_state_snapshot(thermostat_state_t *out_state)
     }
 
     *out_state = s_state;
-    return ERR_OK;
+    return APP_ERR_OK;
 }

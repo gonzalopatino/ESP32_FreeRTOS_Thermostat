@@ -126,7 +126,7 @@ static void task_control(void *arg) {
         if (xQueueReceive(g_q_sensor_samples, &sample, portMAX_DELAY) == pdTRUE) {
 
             app_error_t err = thermostat_core_process_sample(&sample, &th_state);
-            if (err != ERR_OK) {
+            if (err != APP_ERR_OK) {
                 // If the brain fails, report the error and skip this cycle.
                 error_report(err, "thermostat_core_process_sample");
                 watchdog_feed();
@@ -144,6 +144,12 @@ static void task_control(void *arg) {
                     (int)th_state.output);
                 xQueueOverwrite(g_q_thermostat_state, &th_state);
             }
+
+            // Publish a copy for NET telemetry
+            if (g_q_telemetry_state != NULL) {  
+                xQueueOverwrite(g_q_telemetry_state, &th_state);
+            }
+
 
             // Apply new output if it changed.
             if (th_state.output != prev_output) {

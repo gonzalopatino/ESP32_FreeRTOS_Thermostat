@@ -14,6 +14,9 @@ extern QueueHandle_t g_q_sensor_samples;
 // Queue of latest thermostat state (producer: CONTROL, consumers: DISPLAY, maybe TELEMETRY)
 extern QueueHandle_t g_q_thermostat_state;
 
+// Queue for telemetry snapshots (producer: CONTROL, consumer: NET)
+extern QueueHandle_t g_q_telemetry_state;
+
 // Initialize all shared queues used by tasks
 void tasks_common_init_queues(void);
 

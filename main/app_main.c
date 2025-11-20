@@ -51,7 +51,7 @@ void app_main(void) {
 
     // Initialize thermostat core (which also initializes thermostat_config
     // and loads setpoint + hysteresis from defaults or stored values).
-    if (thermostat_core_init() != ERR_OK) {
+    if (thermostat_core_init() != APP_ERR_OK) {
         error_fatal(ERR_GENERIC, "thermostat_core_init");
     }
 

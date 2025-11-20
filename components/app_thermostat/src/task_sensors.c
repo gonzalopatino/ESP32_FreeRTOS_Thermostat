@@ -32,7 +32,7 @@ static void task_sensors(void *arg) {
     watchdog_register_current("SENSORS");
 
     // Initialize sensor driver (stub today, real hardware later).
-    if (drv_temp_sensors_init() != ERR_OK) {
+    if (drv_temp_sensors_init() != APP_ERR_OK) {
         error_report(ERR_GENERIC, "drv_temp_sensors_init");
     }
 
@@ -48,7 +48,7 @@ static void task_sensors(void *arg) {
 
         // Ask driver for new readings (stub simulates drifting values)
         app_error_t err = drv_temp_read(&sample);
-        if (err == ERR_OK) {
+        if (err == APP_ERR_OK) {
 
             // If the queue exists, overwrite with the latest sample.
             // Overwrite is intentional: control logic needs ONLY

@@ -30,7 +30,7 @@ app_error_t thermostat_config_init(void)
              "Init setpoint=%.2fC hysteresis=%.2fC",
              s_cfg.setpoint_c, s_cfg.hysteresis_c);
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 app_error_t thermostat_config_get(thermostat_config_t *out_cfg)
@@ -47,7 +47,7 @@ app_error_t thermostat_config_get(thermostat_config_t *out_cfg)
     if (xSemaphoreTake(s_cfg_mutex, portMAX_DELAY) == pdTRUE) {
         *out_cfg = s_cfg;  // struct copy
         xSemaphoreGive(s_cfg_mutex);
-        return ERR_OK;
+        return APP_ERR_OK;
     }
 
     return ERR_GENERIC;
@@ -72,7 +72,7 @@ app_error_t thermostat_config_set(const thermostat_config_t *new_cfg)
                  s_cfg.setpoint_c, s_cfg.hysteresis_c);
 
         xSemaphoreGive(s_cfg_mutex);
-        return ERR_OK;
+        return APP_ERR_OK;
     }
 
     return ERR_GENERIC;

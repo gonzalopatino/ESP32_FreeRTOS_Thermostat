@@ -116,7 +116,7 @@ app_error_t drv_buttons_init(void)
              (int)GPIO_BTN_DOWN,
              (int)GPIO_BTN_MODE);
 
-    return ERR_OK;
+    return APP_ERR_OK;
 }
 
 QueueHandle_t drv_buttons_get_queue(void)

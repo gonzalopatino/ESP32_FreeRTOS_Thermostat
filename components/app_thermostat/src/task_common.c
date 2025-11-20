@@ -3,26 +3,16 @@
 // Global queues shared between tasks
 QueueHandle_t g_q_sensor_samples    = NULL;
 QueueHandle_t g_q_thermostat_state  = NULL;
+QueueHandle_t g_q_telemetry_state   = NULL;
 
-void tasks_common_init_queues(void) {
-    // Overwrite queue since control only needs latest sample
-    g_q_sensor_samples = xQueueCreate(
-        1,                         // queue length
-        sizeof(sensor_sample_t)    // element size
-    );
+void tasks_common_init_queues(void)
+{
+    g_q_sensor_samples   = xQueueCreate(1, sizeof(sensor_sample_t));
+    g_q_thermostat_state = xQueueCreate(1, sizeof(thermostat_state_t));
+    g_q_telemetry_state  = xQueueCreate(1, sizeof(thermostat_state_t));
 
-    if (g_q_sensor_samples == NULL) {
-    error_fatal(ERR_QUEUE_CREATE_FAILED, "g_q_sensor_samples");
-    }
-
-
-    // Overwrite queue for thermostat state as well
-    g_q_thermostat_state = xQueueCreate(
-        1,                         // depth, tune as needed
-        sizeof(thermostat_state_t) //element size
-    );
-
-    if (g_q_thermostat_state == NULL){
-        error_fatal(ERR_QUEUE_CREATE_FAILED, "g_q_thermostat_state");
+    if (!g_q_sensor_samples || !g_q_thermostat_state || !g_q_telemetry_state) {
+        // You already have logging/error helpers, keep it simple
+        error_report(ERR_GENERIC, "tasks_common_init_queues: queue alloc failed");
     }
 }

@@ -21,14 +21,14 @@ static const char *TAG = "BTN_UI";
 static void apply_setpoint_delta(float delta_c)
 {
     thermostat_config_t cfg;
-    if (thermostat_config_get(&cfg) != ERR_OK) {
+    if (thermostat_config_get(&cfg) != APP_ERR_OK) {
         error_report(ERR_GENERIC, "thermostat_config_get");
         return;
     }
 
     cfg.setpoint_c += delta_c;
 
-    if (thermostat_config_get(&cfg) != ERR_OK) {
+    if (thermostat_config_get(&cfg) != APP_ERR_OK) {
         error_report(ERR_GENERIC, "thermostat_config_get");
         return;
     }
@@ -41,7 +41,7 @@ static void apply_setpoint_delta(float delta_c)
         cfg.setpoint_c = THERMOSTAT_SP_MAX_C;
     }
 
-    if (thermostat_config_set(&cfg) != ERR_OK) {
+    if (thermostat_config_set(&cfg) != APP_ERR_OK) {
         error_report(ERR_GENERIC, "thermostat_config_set");
         return;
     }
@@ -68,7 +68,7 @@ static const char *mode_to_str(thermostat_mode_t mode)
 static void cycle_mode(void)
 {
     thermostat_mode_t current;
-    if (thermostat_get_mode(&current) != ERR_OK) {
+    if (thermostat_get_mode(&current) != APP_ERR_OK) {
         error_report(ERR_GENERIC, "thermostat_get_mode");
         return;
     }
@@ -93,7 +93,7 @@ static void cycle_mode(void)
         break;
     }
 
-    if (thermostat_set_mode(next) != ERR_OK) {
+    if (thermostat_set_mode(next) != APP_ERR_OK) {
         error_report(ERR_GENERIC, "thermostat_set_mode");
         return;
     }
@@ -117,7 +117,7 @@ static void task_buttons(void *arg)
 
     watchdog_register_current("BUTTONS");
 
-    if (drv_buttons_init() != ERR_OK) {
+    if (drv_buttons_init() != APP_ERR_OK) {
         error_fatal(ERR_GENERIC, "drv_buttons_init");
     }
 

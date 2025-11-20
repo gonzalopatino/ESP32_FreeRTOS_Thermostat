@@ -138,7 +138,14 @@
 #define TASK_PRIO_NET       4
 #define TASK_STACK_NET      4096
 
+// ---------------------------------------------------------------------------
+// Telemetry server configuration
+// ---------------------------------------------------------------------------
+#define TH_SERVER_HOST   "10.0.0.79"
+#define TH_SERVER_PORT   "8000"
 
+// Optional future: versioned API path
+#define TH_API_INGEST_PATH "/api/telemetry/ingest/"
 
 
 #endif  // CONFIG_H
