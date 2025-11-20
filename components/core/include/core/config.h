@@ -143,6 +143,7 @@
 // ---------------------------------------------------------------------------
 #define TH_SERVER_HOST   "10.0.0.79"
 #define TH_SERVER_PORT   "8000"
+#define TH_SERVER_API_KEY "super-secret-token"
 
 // Optional future: versioned API path
 #define TH_API_INGEST_PATH "/api/telemetry/ingest/"

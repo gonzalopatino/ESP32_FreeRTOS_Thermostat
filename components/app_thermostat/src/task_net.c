@@ -7,6 +7,7 @@
 #include "nvs_flash.h"
 #include "esp_system.h"
 
+
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 
@@ -25,6 +26,8 @@ static const char *TAG = "NET";
 static int  s_retry_count    = 0;
 static bool s_wifi_ready     = false;  // got IP
 static bool s_sent_telemetry = false;  // only send once per boot
+
+
 
 // --- helpers to stringify enums -----------------------------------------
 
@@ -122,6 +125,7 @@ static void net_send_telemetry(const thermostat_state_t *state)
     }
 
     esp_http_client_set_header(client, "Content-Type", "application/json");
+    esp_http_client_set_header(client, "X-API-Key", TH_SERVER_API_KEY);
     esp_http_client_set_post_field(client, json_body, strlen(json_body));
 
     esp_err_t err = esp_http_client_perform(client);
@@ -240,6 +244,10 @@ static void task_net(void *arg)
 
     log_post(LOG_LEVEL_INFO, TAG,
              "Wi-Fi STA init finished, waiting for connection...");
+
+    log_post(LOG_LEVEL_INFO, TAG, "NET server host=%s port=%s path=%s",
+         TH_SERVER_HOST, TH_SERVER_PORT, TH_API_INGEST_PATH);
+
 
     while (1) {
         if (s_wifi_ready && timeutil_is_time_set() && !s_sent_telemetry) {
