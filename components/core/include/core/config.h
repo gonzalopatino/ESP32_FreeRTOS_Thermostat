@@ -156,8 +156,14 @@
 #define DEVICE_SERIAL "SN-ESP32-THERMO-001"
 
 // This is the raw API key we got ONCE from /api/devices/register/
-// For now we hard-code it. Later this will come from secure storage.
+
 #define DEVICE_API_KEY  "gapK_SjuuRC5CX3NLQ59RE1hNHaeEeqlknQUi-1gIPI"
+
+
+// Device identity defaults (used if NVS does not have values yet)
+// Later, provisioning will overwrite these in NVS.
+#define DEVICE_SERIAL_DEFAULT   "SN-ESP32-THERMO-001"
+#define DEVICE_API_KEY_DEFAULT  "gapK_SjuuRC5CX3NLQ59RE1hNHaeEeqlknQUi-1gIPI"
 
 
 // Optional future: versioned API path

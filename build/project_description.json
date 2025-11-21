@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "thermostat",
-    "project_version":    "5f05079-dirty",
+    "project_version":    "f6821c5-dirty",
     "project_path":       "C:/Users/coleg/Documents/esp_projects/thermostat",
     "idf_path":           "C:/Espressif/frameworks/esp-idf-v5.5.1",
     "build_dir":          "C:/Users/coleg/Documents/esp_projects/thermostat/build",

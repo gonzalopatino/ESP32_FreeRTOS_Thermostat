@@ -7,7 +7,6 @@
 #include "nvs_flash.h"
 #include "esp_system.h"
 
-
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 
@@ -17,29 +16,8 @@
 #include "core/logging.h"
 #include "core/watchdog.h"
 #include "core/error.h"
-#include "core/timeutil.h"        // timeutil_init_sntp, timeutil_is_time_valid, timeutil_get_local_iso8601
+#include "core/timeutil.h"        // timeutil_init_sntp, timeutil_is_time_set, timeutil_get_iso8601
 
-#include "app/task_common.h"      // g_q_telemetry_state, thermostat_state_t
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_netif.h"
-#include "nvs_flash.h"
-#include "esp_system.h"
-
-#include "esp_crt_bundle.h"
-#include "esp_http_client.h"
-
-#include <string.h>
-
-#include "core/config.h"
-#include "core/logging.h"
-#include "core/watchdog.h"
-#include "core/error.h"
-#include "core/timeutil.h"        // SNTP & ISO time helpers
 #include "app/task_common.h"      // g_q_telemetry_state, thermostat_state_t
 
 static const char *TAG = "NET";
@@ -47,6 +25,10 @@ static const char *TAG = "NET";
 static int  s_retry_count    = 0;
 static bool s_wifi_ready     = false;  // got IP
 static bool s_sent_telemetry = false;  // only send once per boot
+
+// Device credentials loaded from NVS (or defaults)
+static char s_device_serial[64];
+static char s_device_api_key[128];
 
 // --- helpers to stringify enums -----------------------------------------
 
@@ -71,8 +53,82 @@ static const char *output_to_str(thermostat_output_t out)
     }
 }
 
+// --- NVS init ------------------------------------------------------------
+
+static void init_nvs(void)
+{
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    if (err != ESP_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "nvs_flash_init failed: %s", esp_err_to_name(err));
+        esp_system_abort("nvs_flash_init failed");
+    }
+}
+
+// --- Device credentials in NVS ------------------------------------------
+// Namespace: "device"
+// Keys:     "serial", "api_key"
+
+static void device_creds_init_from_nvs_or_defaults(void)
+{
+    nvs_handle_t nvs;
+    esp_err_t err = nvs_open("device", NVS_READWRITE, &nvs);
+    if (err != ESP_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "nvs_open(\"device\") failed: %s", esp_err_to_name(err));
+        // Fallback: just use defaults in RAM
+        strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
+        strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
+        return;
+    }
+
+    // Try to read serial
+    size_t len_serial = sizeof(s_device_serial);
+    err = nvs_get_str(nvs, "serial", s_device_serial, &len_serial);
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+        // Not yet provisioned, write defaults
+        strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
+        ESP_ERROR_CHECK(nvs_set_str(nvs, "serial", s_device_serial));
+        log_post(LOG_LEVEL_WARN, TAG,
+                 "Device serial not in NVS, wrote default \"%s\"",
+                 s_device_serial);
+    } else if (err != ESP_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "nvs_get_str(serial) failed: %s", esp_err_to_name(err));
+        strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
+    }
+
+    // Try to read API key
+    size_t len_key = sizeof(s_device_api_key);
+    err = nvs_get_str(nvs, "api_key", s_device_api_key, &len_key);
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+        strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
+        ESP_ERROR_CHECK(nvs_set_str(nvs, "api_key", s_device_api_key));
+        log_post(LOG_LEVEL_WARN, TAG,
+                 "Device API key not in NVS, wrote default");
+    } else if (err != ESP_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG,
+                 "nvs_get_str(api_key) failed: %s", esp_err_to_name(err));
+        strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
+    }
+
+    // Make sure changes are committed if we wrote defaults
+    ESP_ERROR_CHECK(nvs_commit(nvs));
+    nvs_close(nvs);
+
+    log_post(LOG_LEVEL_INFO, TAG,
+             "Device creds loaded: serial=\"%s\" (api_key len=%u)",
+             s_device_serial,
+             (unsigned)strlen(s_device_api_key));
+}
+
 // --- HTTP telemetry sender ----------------------------------------------
 
+// Send one snapshot to the Django server.
 static void net_send_telemetry(const thermostat_state_t *state)
 {
     if (!timeutil_is_time_set()) {
@@ -80,7 +136,7 @@ static void net_send_telemetry(const thermostat_state_t *state)
         return;
     }
 
-    // Device-side timestamp
+    // Device local timestamp string
     char ts_buf[40];
     if (!timeutil_get_iso8601(ts_buf, sizeof(ts_buf))) {
         log_post(LOG_LEVEL_WARN, TAG, "Failed to format local time, skipping telemetry");
@@ -94,10 +150,11 @@ static void net_send_telemetry(const thermostat_state_t *state)
              TH_SERVER_PORT,
              TH_API_INGEST_PATH);
 
-    // JSON body (NO device_id anymore)
+    // Build JSON body – note: no device_id field, server trusts Authorization header
     char json_body[256];
     int len = snprintf(
-        json_body, sizeof(json_body),
+        json_body,
+        sizeof(json_body),
         "{"
           "\"mode\":\"%s\","
           "\"temp_inside_c\":%.2f,"
@@ -127,7 +184,7 @@ static void net_send_telemetry(const thermostat_state_t *state)
     esp_http_client_config_t cfg = {
         .url               = url,
         .method            = HTTP_METHOD_POST,
-        .transport_type    = HTTP_TRANSPORT_OVER_TCP,  // HTTP for LAN
+        .transport_type    = HTTP_TRANSPORT_OVER_TCP,  // plain HTTP on LAN
         .crt_bundle_attach = NULL,
     };
 
@@ -137,26 +194,24 @@ static void net_send_telemetry(const thermostat_state_t *state)
         return;
     }
 
-    // --- NEW AUTH HEADER HERE ---
+    // Build Authorization header from NVS-backed values
     char auth_header[256];
     snprintf(
-        auth_header, sizeof(auth_header),
+        auth_header,
+        sizeof(auth_header),
         "Device %s:%s",
-        DEVICE_SERIAL,
-        DEVICE_API_KEY
+        s_device_serial,
+        s_device_api_key
     );
 
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_header(client, "Authorization", auth_header);
 
-    // Remove old API key header
-    // esp_http_client_set_header(client, "X-API-Key", TH_SERVER_API_KEY); // DEL
-
     esp_http_client_set_post_field(client, json_body, strlen(json_body));
 
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
-        int status = esp_http_client_get_status_code(client);
+        int       status      = esp_http_client_get_status_code(client);
         long long content_len = esp_http_client_get_content_length(client);
         log_post(LOG_LEVEL_INFO, TAG,
                  "Telemetry POST OK, status=%d len=%lld",
@@ -169,9 +224,6 @@ static void net_send_telemetry(const thermostat_state_t *state)
 
     esp_http_client_cleanup(client);
 }
-
-// (Remaining WiFi event handlers, NVS init, task_net loop unchanged)
-
 
 // --- Wi-Fi event handler -------------------------------------------------
 
@@ -209,22 +261,6 @@ static void wifi_event_handler(void *arg,
     }
 }
 
-// --- NVS init ------------------------------------------------------------
-
-static void init_nvs(void)
-{
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    if (err != ESP_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG,
-                 "nvs_flash_init failed: %s", esp_err_to_name(err));
-        esp_system_abort("nvs_flash_init failed");
-    }
-}
-
 // --- NET task ------------------------------------------------------------
 
 static void task_net(void *arg)
@@ -234,6 +270,7 @@ static void task_net(void *arg)
     watchdog_register_current("NET");
 
     init_nvs();
+    device_creds_init_from_nvs_or_defaults();
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -258,7 +295,7 @@ static void task_net(void *arg)
         NULL,
         NULL));
 
-    wifi_config_t wifi_config = { 0 };
+    wifi_config_t wifi_config = (wifi_config_t){ 0 };
 
     snprintf((char *)wifi_config.sta.ssid,
              sizeof(wifi_config.sta.ssid), "%s", WIFI_SSID);
@@ -275,8 +312,7 @@ static void task_net(void *arg)
              "Wi-Fi STA init finished, waiting for connection...");
 
     log_post(LOG_LEVEL_INFO, TAG, "NET server host=%s port=%s path=%s",
-         TH_SERVER_HOST, TH_SERVER_PORT, TH_API_INGEST_PATH);
-
+             TH_SERVER_HOST, TH_SERVER_PORT, TH_API_INGEST_PATH);
 
     while (1) {
         if (s_wifi_ready && timeutil_is_time_set() && !s_sent_telemetry) {
