@@ -145,6 +145,21 @@
 #define TH_SERVER_PORT   "8000"
 #define TH_SERVER_API_KEY "super-secret-token"
 
+
+
+
+
+// ---------------------------------------------------------------------------
+// Telemetry Device Info
+// ---------------------------------------------------------------------------
+#pragma once
+#define DEVICE_SERIAL "SN-ESP32-THERMO-001"
+
+// This is the raw API key we got ONCE from /api/devices/register/
+// For now we hard-code it. Later this will come from secure storage.
+#define DEVICE_API_KEY  "gapK_SjuuRC5CX3NLQ59RE1hNHaeEeqlknQUi-1gIPI"
+
+
 // Optional future: versioned API path
 #define TH_API_INGEST_PATH "/api/telemetry/ingest/"
 

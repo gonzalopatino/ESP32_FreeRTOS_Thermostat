@@ -21,20 +21,38 @@
 
 #include "app/task_common.h"      // g_q_telemetry_state, thermostat_state_t
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_netif.h"
+#include "nvs_flash.h"
+#include "esp_system.h"
+
+#include "esp_crt_bundle.h"
+#include "esp_http_client.h"
+
+#include <string.h>
+
+#include "core/config.h"
+#include "core/logging.h"
+#include "core/watchdog.h"
+#include "core/error.h"
+#include "core/timeutil.h"        // SNTP & ISO time helpers
+#include "app/task_common.h"      // g_q_telemetry_state, thermostat_state_t
+
 static const char *TAG = "NET";
 
 static int  s_retry_count    = 0;
 static bool s_wifi_ready     = false;  // got IP
 static bool s_sent_telemetry = false;  // only send once per boot
 
-
-
 // --- helpers to stringify enums -----------------------------------------
 
 static const char *mode_to_str(thermostat_mode_t mode)
 {
     switch (mode) {
-        
         case THERMOSTAT_MODE_OFF:  return "OFF";
         case THERMOSTAT_MODE_HEAT: return "HEAT";
         case THERMOSTAT_MODE_COOL: return "COOL";
@@ -55,7 +73,6 @@ static const char *output_to_str(thermostat_output_t out)
 
 // --- HTTP telemetry sender ----------------------------------------------
 
-// Send one snapshot to the Django server.
 static void net_send_telemetry(const thermostat_state_t *state)
 {
     if (!timeutil_is_time_set()) {
@@ -63,7 +80,7 @@ static void net_send_telemetry(const thermostat_state_t *state)
         return;
     }
 
-    // Device local timestamp string
+    // Device-side timestamp
     char ts_buf[40];
     if (!timeutil_get_iso8601(ts_buf, sizeof(ts_buf))) {
         log_post(LOG_LEVEL_WARN, TAG, "Failed to format local time, skipping telemetry");
@@ -72,19 +89,16 @@ static void net_send_telemetry(const thermostat_state_t *state)
 
     char url[128];
     snprintf(url, sizeof(url),
-         "http://%s:%s%s",
-         TH_SERVER_HOST,
-         TH_SERVER_PORT,
-         TH_API_INGEST_PATH);
+             "http://%s:%s%s",
+             TH_SERVER_HOST,
+             TH_SERVER_PORT,
+             TH_API_INGEST_PATH);
 
-
+    // JSON body (NO device_id anymore)
     char json_body[256];
-
     int len = snprintf(
-        json_body,
-        sizeof(json_body),
+        json_body, sizeof(json_body),
         "{"
-          "\"device_id\":\"%s\","
           "\"mode\":\"%s\","
           "\"temp_inside_c\":%.2f,"
           "\"temp_outside_c\":%.2f,"
@@ -93,7 +107,6 @@ static void net_send_telemetry(const thermostat_state_t *state)
           "\"output\":\"%s\","
           "\"timestamp\":\"%s\""
         "}",
-        "esp32-thermostat-1",
         mode_to_str(state->mode),
         state->tin_c,
         state->tout_c,
@@ -114,7 +127,7 @@ static void net_send_telemetry(const thermostat_state_t *state)
     esp_http_client_config_t cfg = {
         .url               = url,
         .method            = HTTP_METHOD_POST,
-        .transport_type    = HTTP_TRANSPORT_OVER_TCP,  // plain HTTP on LAN
+        .transport_type    = HTTP_TRANSPORT_OVER_TCP,  // HTTP for LAN
         .crt_bundle_attach = NULL,
     };
 
@@ -124,13 +137,26 @@ static void net_send_telemetry(const thermostat_state_t *state)
         return;
     }
 
+    // --- NEW AUTH HEADER HERE ---
+    char auth_header[256];
+    snprintf(
+        auth_header, sizeof(auth_header),
+        "Device %s:%s",
+        DEVICE_SERIAL,
+        DEVICE_API_KEY
+    );
+
     esp_http_client_set_header(client, "Content-Type", "application/json");
-    esp_http_client_set_header(client, "X-API-Key", TH_SERVER_API_KEY);
+    esp_http_client_set_header(client, "Authorization", auth_header);
+
+    // Remove old API key header
+    // esp_http_client_set_header(client, "X-API-Key", TH_SERVER_API_KEY); // DEL
+
     esp_http_client_set_post_field(client, json_body, strlen(json_body));
 
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
-        int       status      = esp_http_client_get_status_code(client);
+        int status = esp_http_client_get_status_code(client);
         long long content_len = esp_http_client_get_content_length(client);
         log_post(LOG_LEVEL_INFO, TAG,
                  "Telemetry POST OK, status=%d len=%lld",
@@ -143,6 +169,9 @@ static void net_send_telemetry(const thermostat_state_t *state)
 
     esp_http_client_cleanup(client);
 }
+
+// (Remaining WiFi event handlers, NVS init, task_net loop unchanged)
+
 
 // --- Wi-Fi event handler -------------------------------------------------
 
