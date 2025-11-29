@@ -30,7 +30,7 @@
 #define PERIOD_SENSORS_MS     500   // sensor sampling period
 
 // Telemetry period to backend (cloud "sample_rate")
-#define TELEMETRY_PERIOD_MS  900000  // adjust as needed [ in ms]
+#define TELEMETRY_PERIOD_MS  15000  // adjust as needed [ in ms]
 
 
 // -----------------------------------------------------------------------------
