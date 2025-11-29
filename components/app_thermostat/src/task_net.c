@@ -20,11 +20,17 @@
 
 #include "app/task_common.h"      // g_q_telemetry_state, thermostat_state_t
 
-static const char *TAG = "NET";
 
-static int  s_retry_count    = 0;
-static bool s_wifi_ready     = false;  // got IP
-static bool s_sent_telemetry = false;  // only send once per boot
+
+static const char *TAG = "NET";
+static int       s_retry_count         = 0;
+static bool      s_wifi_ready          = false;  // got IP
+static TickType_t s_last_telemetry_tick = 0;     // last time we sent telemetry
+
+
+
+
+
 
 // Device credentials loaded from NVS (or defaults)
 static char s_device_serial[64];
@@ -230,7 +236,7 @@ static void wifi_event_handler(void *arg,
         timeutil_init_sntp();
         s_retry_count    = 0;
         s_wifi_ready     = true;
-        s_sent_telemetry = false;
+        s_last_telemetry_tick  = 0;  // force immediate send once time is set
     }
 }
 
@@ -288,33 +294,38 @@ static void task_net(void *arg)
              TH_SERVER_HOST, TH_SERVER_PORT, TH_API_INGEST_PATH);
 
     while (1) {
-        if (s_wifi_ready && timeutil_is_time_set() && !s_sent_telemetry) {
+        if (s_wifi_ready && timeutil_is_time_set()) {
 
-            thermostat_state_t snap;
+            TickType_t now = xTaskGetTickCount();
 
-            if (!g_q_telemetry_state) {
-                log_post(LOG_LEVEL_ERROR, TAG,
-                         "g_q_telemetry_state is NULL, cannot send telemetry");
-                s_sent_telemetry = true; // avoid spamming
-            } else if (xQueueReceive(g_q_telemetry_state,
-                                     &snap,
-                                     pdMS_TO_TICKS(5000)) == pdTRUE) {
+            // Has TELEMETRY_PERIOD_MS elapsed since last send?
+            if (now - s_last_telemetry_tick >= pdMS_TO_TICKS(TELEMETRY_PERIOD_MS)) {
 
-                log_post(LOG_LEVEL_INFO, TAG,
-                         "Wi-Fi + time ready, sending telemetry...");
-                net_send_telemetry(&snap);
-                s_sent_telemetry = true;
+                thermostat_state_t snap;
 
-            } else {
-                log_post(LOG_LEVEL_WARN, TAG,
-                         "Timeout waiting for telemetry snapshot");
-                // we will try again next loop
+                if (!g_q_telemetry_state) {
+                    log_post(LOG_LEVEL_ERROR, TAG,
+                            "g_q_telemetry_state is NULL, cannot send telemetry");
+                } else if (xQueuePeek(g_q_telemetry_state,
+                                    &snap,
+                                    0) == pdTRUE) {
+
+                    log_post(LOG_LEVEL_INFO, TAG,
+                            "Wi-Fi + time ready, sending telemetry...");
+                    net_send_telemetry(&snap);
+                    s_last_telemetry_tick = now;
+
+                } else {
+                    log_post(LOG_LEVEL_WARN, TAG,
+                            "No telemetry snapshot available in queue");
+                }
             }
         }
 
         watchdog_feed();
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(500));  // check twice per second
     }
+
 }
 
 void task_net_start(void)

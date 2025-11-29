@@ -29,6 +29,10 @@
 #define PERIOD_LOGGER_MS      50    // how often logger wakes when idle
 #define PERIOD_SENSORS_MS     500   // sensor sampling period
 
+// Telemetry period to backend (cloud "sample_rate")
+#define TELEMETRY_PERIOD_MS  900000  // adjust as needed [ in ms]
+
+
 // -----------------------------------------------------------------------------
 // Logging subsystem
 // -----------------------------------------------------------------------------
