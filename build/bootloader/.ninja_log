@@ -241,3 +241,14 @@
 26	110	7861508990761567	C:/Users/coleg/Documents/esp_projects/thermostat/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
 29	131	7861513001755262	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
 29	131	7861513001755262	C:/Users/coleg/Documents/esp_projects/thermostat/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
+16	102	7861523431282213	esp-idf/esp_bootloader_format/CMakeFiles/__idf_esp_bootloader_format.dir/esp_bootloader_desc.c.obj	95563acadca5e4e3
+103	199	7861523432156637	esp-idf/esp_bootloader_format/libesp_bootloader_format.a	be45ac2439c8fc1a
+199	366	7861523433113086	bootloader.elf	68fbb3eb8ab70709
+366	794	7861523439000865	.bin_timestamp	993a7c2206c4383
+366	794	7861523439000865	C:/Users/coleg/Documents/esp_projects/thermostat/build/bootloader/.bin_timestamp	993a7c2206c4383
+794	899	7861523439054953	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
+794	899	7861523439054953	C:/Users/coleg/Documents/esp_projects/thermostat/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
+45	147	7861527855154764	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
+45	147	7861527855154764	C:/Users/coleg/Documents/esp_projects/thermostat/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
+28	118	7861528687850725	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
+28	118	7861528687850725	C:/Users/coleg/Documents/esp_projects/thermostat/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	fb09179e6d9ff6e8
