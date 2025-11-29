@@ -70,8 +70,8 @@ static void init_nvs(void)
 }
 
 // --- Device credentials in NVS ------------------------------------------
-// Namespace: "device"
-// Keys:     "serial", "api_key"
+// Temporary dev helper: always overwrite NVS with the compile-time defaults.
+// This fixes stale values (like SN-ESP32-THERMO-001) left from older builds.
 
 static void device_creds_init_from_nvs_or_defaults(void)
 {
@@ -86,45 +86,22 @@ static void device_creds_init_from_nvs_or_defaults(void)
         return;
     }
 
-    // Try to read serial
-    size_t len_serial = sizeof(s_device_serial);
-    err = nvs_get_str(nvs, "serial", s_device_serial, &len_serial);
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
-        // Not yet provisioned, write defaults
-        strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
-        ESP_ERROR_CHECK(nvs_set_str(nvs, "serial", s_device_serial));
-        log_post(LOG_LEVEL_WARN, TAG,
-                 "Device serial not in NVS, wrote default \"%s\"",
-                 s_device_serial);
-    } else if (err != ESP_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG,
-                 "nvs_get_str(serial) failed: %s", esp_err_to_name(err));
-        strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
-    }
-
-    // Try to read API key
-    size_t len_key = sizeof(s_device_api_key);
-    err = nvs_get_str(nvs, "api_key", s_device_api_key, &len_key);
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
-        strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
-        ESP_ERROR_CHECK(nvs_set_str(nvs, "api_key", s_device_api_key));
-        log_post(LOG_LEVEL_WARN, TAG,
-                 "Device API key not in NVS, wrote default");
-    } else if (err != ESP_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG,
-                 "nvs_get_str(api_key) failed: %s", esp_err_to_name(err));
-        strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
-    }
-
-    // Make sure changes are committed if we wrote defaults
+    // Force-update NVS to match our current defaults
+    ESP_ERROR_CHECK(nvs_set_str(nvs, "serial", DEVICE_SERIAL_DEFAULT));
+    ESP_ERROR_CHECK(nvs_set_str(nvs, "api_key", DEVICE_API_KEY_DEFAULT));
     ESP_ERROR_CHECK(nvs_commit(nvs));
     nvs_close(nvs);
 
+    // Load into RAM
+    strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
+    strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
+
     log_post(LOG_LEVEL_INFO, TAG,
-             "Device creds loaded: serial=\"%s\" (api_key len=%u)",
+             "Device creds UPDATED in NVS: serial=\"%s\" (api_key len=%u)",
              s_device_serial,
              (unsigned)strlen(s_device_api_key));
 }
+
 
 // --- HTTP telemetry sender ----------------------------------------------
 
@@ -196,14 +173,10 @@ static void net_send_telemetry(const thermostat_state_t *state)
 
     // Build Authorization header from NVS-backed values
     char auth_header[256];
-    snprintf(
-        auth_header,
-        sizeof(auth_header),
-        "Device %s:%s",
-        s_device_serial,
-        s_device_api_key
-    );
+    snprintf(auth_header, sizeof(auth_header),
+         "Device %s:%s", s_device_serial, s_device_api_key);
 
+    log_post(LOG_LEVEL_DEBUG, TAG, "Auth header: %s", auth_header);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_header(client, "Authorization", auth_header);
 
