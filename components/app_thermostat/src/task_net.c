@@ -1,14 +1,32 @@
+/**
+ * @file    task_net.c
+ * @brief   WiFi connectivity and cloud telemetry task.
+ *
+ * Manages WiFi connection, SNTP time synchronization, and
+ * periodic telemetry transmission to the backend server.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_netif.h"
-#include "nvs_flash.h"
 #include "esp_system.h"
-
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
+#include "nvs_flash.h"
 
 #include <string.h>
 
@@ -16,17 +34,20 @@
 #include "core/logging.h"
 #include "core/watchdog.h"
 #include "core/error.h"
-#include "core/timeutil.h"        // timeutil_init_sntp, timeutil_is_time_set, timeutil_get_iso8601
-#include "core/provisioning.h"    // provisioned WiFi + API key
+#include "core/timeutil.h"
+#include "core/provisioning.h"
 
-#include "app/task_common.h"      // g_q_telemetry_state, thermostat_state_t
+#include "app/task_common.h"
 
-
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 static const char *TAG = "NET";
-static int       s_retry_count         = 0;
-static bool      s_wifi_ready          = false;  // got IP
-static TickType_t s_last_telemetry_tick = 0;     // last time we sent telemetry
+
+static int        s_retry_count        = 0;
+static bool       s_wifi_ready         = false;
+static TickType_t s_last_telemetry_tick = 0;
 
 
 

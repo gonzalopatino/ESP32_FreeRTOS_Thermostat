@@ -1,27 +1,46 @@
+/**
+ * @file    task_heartbeat.c
+ * @brief   System heartbeat LED task.
+ *
+ * Blinks the onboard LED to indicate system health and
+ * provides visual confirmation that the firmware is running.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#include "driver/gpio.h"
+
 #include "core/config.h"
 #include "core/logging.h"
 #include "core/watchdog.h"
-#include "driver/gpio.h"
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE FUNCTIONS
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * @brief Configure the LED GPIO pin for output.
- *
- * This runs once during startup of the heartbeat task.
- * It sets the pin mode, disables internal pull resistors,
- * and ensures the LED starts OFF.
+ * @brief Initialize the heartbeat LED GPIO.
  */
-
-
-static void heartbeat_led_init(void) {
-    // Configure LED pin as output
+static void heartbeat_led_init(void)
+{
     gpio_config_t io_conf = {
-        .pin_bit_mask = 1ULL << LED_GPIO,       // Select our LED PIN
-        .mode = GPIO_MODE_OUTPUT,               // Configure as output
-        .pull_up_en = GPIO_PULLUP_DISABLE,      // No pull-up
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,  // No pull-down
-        .intr_type = GPIO_INTR_DISABLE          // No interrupts on this pin
+        .pin_bit_mask = 1ULL << LED_GPIO,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
     };
     gpio_config(&io_conf);
 

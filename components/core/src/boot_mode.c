@@ -1,10 +1,25 @@
 /**
- * @file boot_mode.c
- * @brief Boot mode state machine implementation.
+ * @file    boot_mode.c
+ * @brief   Boot mode state machine implementation.
  *
- * Determines whether device should boot into normal thermostat mode
- * or setup/provisioning mode.
+ * Determines whether the device should boot into:
+ *   - NORMAL mode: Standard thermostat operation
+ *   - SETUP mode: WiFi provisioning and configuration
+ *
+ * Boot mode selection is based on provisioning state and
+ * physical button input (MODE button held during boot).
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
  */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 #include "core/boot_mode.h"
 #include "core/provisioning.h"
@@ -17,9 +32,9 @@
 
 #include <stdio.h>
 
-// -----------------------------------------------------------------------------
-// Private State
-// -----------------------------------------------------------------------------
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 static const char *TAG = "BOOT";
 

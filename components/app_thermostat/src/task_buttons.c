@@ -1,3 +1,24 @@
+/**
+ * @file    task_buttons.c
+ * @brief   Button input handling task.
+ *
+ * Handles physical button inputs for:
+ *   - Setpoint adjustment (UP/DOWN buttons)
+ *   - Mode cycling (MODE button short press)
+ *   - Settings mode entry (MODE button long press)
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -9,20 +30,24 @@
 #include "core/watchdog.h"
 #include "core/error.h"
 #include "core/provisioning.h"
-
 #include "core/thermostat_config.h"
+#include "core/thermostat.h"
+
 #include "drivers/drv_buttons.h"
 #include "drivers/drv_display.h"
-#include "core/thermostat.h" // <-- for thermostat_get_mode / thermostat_set_mode
 
 #include "app/task_buttons.h"
 #include "app/setup_server.h"
 
-#include <string.h>                 // strlen
+#include <string.h>
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE CONSTANTS
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 static const char *TAG = "BTN_UI";
 
-// Long-press threshold for settings mode (5 seconds)
+/** Long-press threshold for settings mode (milliseconds) */
 #define SETTINGS_MODE_HOLD_MS  5000
 
 

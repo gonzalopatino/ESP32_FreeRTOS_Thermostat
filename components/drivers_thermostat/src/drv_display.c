@@ -1,8 +1,27 @@
+/**
+ * @file    drv_display.c
+ * @brief   HD44780 LCD display driver (4-bit mode).
+ *
+ * Provides low-level control for a 16x2 character LCD using
+ * the HD44780 controller in 4-bit parallel mode.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "drivers/drv_display.h"
 
-#include "core/config.h"    // LCD_PIN_RS, LCD_PIN_EN, LCD_PIN_D4..D7, LCD_ROWS, LCD_COLS
-#include "core/logging.h"   // log_post
-#include "core/error.h"     // app_error_t, ERR_OK, ERR_GENERIC
+#include "core/config.h"
+#include "core/logging.h"
+#include "core/error.h"
 #include "core/thermostat.h"
 
 #include "driver/gpio.h"
@@ -11,11 +30,17 @@
 #include <string.h>
 #include <stdio.h>
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 static const char *TAG = "LCD";
 
 static bool s_lcd_initialized = false;
 
-/* ---------------- Low-Level GPIO Helpers ---------------- */
+/* ═══════════════════════════════════════════════════════════════════════════
+ * LOW-LEVEL GPIO HELPERS
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 static void lcd_gpio_init(void)
 {

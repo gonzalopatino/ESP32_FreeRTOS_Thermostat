@@ -1,3 +1,22 @@
+/**
+ * @file    task_display.c
+ * @brief   LCD display update task.
+ *
+ * Updates the 16x2 LCD display with current thermostat status
+ * including temperature, setpoint, mode, and output state.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -5,12 +24,16 @@
 #include "core/config.h"
 #include "core/logging.h"
 #include "core/watchdog.h"
+#include "core/thermostat.h"
 
-#include "app/task_common.h"        // g_q_thermostat_state
+#include "app/task_common.h"
 #include "app/task_display.h"
 
-#include "drivers/drv_display.h"    // drv_display_*
-#include "core/thermostat.h"        // thermostat_state_t
+#include "drivers/drv_display.h"
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 static const char *TAG = "DISPLAY";
 

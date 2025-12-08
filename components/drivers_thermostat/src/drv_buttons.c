@@ -1,4 +1,24 @@
+/**
+ * @file    drv_buttons.c
+ * @brief   Button input driver with interrupt handling.
+ *
+ * Provides GPIO configuration and interrupt-driven button
+ * event detection for UP, DOWN, and MODE buttons.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "drivers/drv_buttons.h"
+
 #include "core/config.h"
 #include "core/logging.h"
 #include "core/error.h"
@@ -8,12 +28,22 @@
 
 #include "driver/gpio.h"
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 static const char *TAG = "DRV_BTN";
 
-// Queue used to send button events from ISR to task context.
+/** Queue for button events (ISR -> task) */
 static QueueHandle_t s_btn_queue = NULL;
 
-// Simple mapping from GPIO to event
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE FUNCTIONS
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * @brief Map GPIO number to button event type.
+ */
 static button_event_t gpio_to_event(gpio_num_t gpio)
 {
     if (gpio == GPIO_BTN_UP) {

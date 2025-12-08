@@ -1,24 +1,25 @@
 /**
- * @file drv_temp_sensors.c
- * @brief Temperature sensor driver for the thermostat firmware.
+ * @file    drv_temp_sensors.c
+ * @brief   AHT20 temperature and humidity sensor driver.
  *
- * This module provides a hardware abstraction around the temperature sensors
- * used by the thermostat. It currently implements support for a single AHT20
- * digital temperature (and humidity) sensor connected over I2C.
+ * Provides hardware abstraction for temperature sensing using
+ * the AHT20 digital sensor over I2C. Handles initialization,
+ * measurement triggering, and raw data conversion.
  *
- * Responsibilities:
- *   - Initialize the I2C bus and AHT20 device
- *   - Trigger measurements on the AHT20
- *   - Convert raw measurement bytes into Celsius
- *   - Populate sensor_sample_t used by the SENSORS task
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
  *
- * Future extensions:
- *   - Add a second physical sensor for true indoor/outdoor readings
- *   - Add humidity reporting
- *   - Error counters and self-diagnostics
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
  */
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "drivers/drv_temp_sensors.h"
+
 #include "core/logging.h"
 #include "core/config.h"
 #include "core/error.h"
@@ -27,7 +28,7 @@
 #include "freertos/task.h"
 
 #include "driver/i2c.h"
-#include "driver/gpio.h"   // For GPIO_PULLUP_ENABLE, pin types
+#include "driver/gpio.h"
 
 static const char *TAG = "DRV_TS";
 

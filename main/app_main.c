@@ -1,37 +1,68 @@
-#include "core/config.h"            // Global configuration: app name, version, stack sizes, priorities, periods
-#include "core/logging.h"           // Logging system (queue + log_post)
-#include "core/error.h"             // Error handling utilities (fatal + non-fatal)
-#include "core/watchdog.h"          // Watchdog framework for monitoring task health
-#include "core/provisioning.h"      // First-time setup / WiFi provisioning state
-#include "core/boot_mode.h"         // Boot mode state machine (NORMAL vs SETUP)
+/**
+ * @file    app_main.c
+ * @brief   Application entry point and boot mode orchestration.
+ *
+ * This module serves as the main entry point for the ThermostatRTOS firmware.
+ * It handles:
+ *   - System initialization (NVS, WiFi, logging)
+ *   - Boot mode detection (NORMAL vs SETUP)
+ *   - Task orchestration and startup sequence
+ *   - Provisioning flow for first-time device setup
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * @license   MIT License - See LICENSE file for details.
+ *
+ * SPDX-License-Identifier: MIT
+ */
 
-#include "freertos/FreeRTOS.h"      // FreeRTOS core
-#include "freertos/task.h"          // vTaskDelay
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-#include "app/task_common.h"        // Shared inter-task queues and helpers
-#include "app/task_sensors.h"       // Sensor task (temperature acquisition)
-#include "app/task_logger.h"        // Logger task (consumes log queue)
-#include "app/task_heartbeat.h"     // Heartbeat task (LED blink + alive message)
-#include "app/task_control.h"       // Control task (hysteresis, heater output)
+/* Core system includes */
+#include "core/config.h"
+#include "core/logging.h"
+#include "core/error.h"
+#include "core/watchdog.h"
+#include "core/provisioning.h"
+#include "core/boot_mode.h"
+#include "core/thermostat.h"
 
-#include "core/thermostat.h"        // Thermostat core (decision logic)
-// #include "core/thermostat_config.h" // No longer needed here, core_init handles it
+/* FreeRTOS includes */
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
+/* Application task includes */
+#include "app/task_common.h"
+#include "app/task_sensors.h"
+#include "app/task_logger.h"
+#include "app/task_heartbeat.h"
+#include "app/task_control.h"
 #include "app/task_display.h"
-
 #include "app/task_buttons.h"
-
 #include "app/task_net.h"
+#include "app/setup_server.h"
 
-#include <string.h>                 // strlen, strncpy
+/* Driver includes */
+#include "drivers/drv_display.h"
 
-#include "drivers/drv_display.h"    // LCD driver for setup mode display
-#include "app/setup_server.h"       // SoftAP + HTTP setup server
+/* Standard library includes */
+#include <string.h>
 
-// Gonzalo Patino
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE CONSTANTS
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-// Duration in ms to hold MODE button for manual setup entry
+/** Duration in ms to hold MODE button for manual setup entry */
 #define SETUP_BUTTON_HOLD_MS  3000
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE FUNCTIONS
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
  * @brief Start normal thermostat operation.

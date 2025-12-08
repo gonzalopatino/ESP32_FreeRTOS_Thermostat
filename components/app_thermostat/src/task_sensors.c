@@ -1,15 +1,33 @@
+/**
+ * @file    task_sensors.c
+ * @brief   Temperature sensor acquisition task.
+ *
+ * Periodically reads temperature data from sensors and publishes
+ * samples to the control task via a shared queue.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
 #include "core/config.h"
 #include "core/logging.h"
 #include "core/watchdog.h"
 #include "core/error.h"
+#include "core/timeutil.h"
+
 #include "app/task_common.h"
 #include "drivers/drv_temp_sensors.h"
-
-#include "core/timeutil.h" //for real time clock (RTO)
-
-//Gonzalo
 
 /**
  * @brief FreeRTOS task responsible for reading temperature sensors.

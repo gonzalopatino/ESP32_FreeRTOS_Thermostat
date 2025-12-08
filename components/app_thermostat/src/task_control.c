@@ -1,3 +1,22 @@
+/**
+ * @file    task_control.c
+ * @brief   HVAC control task with hysteresis logic.
+ *
+ * Consumes temperature samples from the sensor task and applies
+ * the thermostat control algorithm to drive heating/cooling outputs.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -9,17 +28,17 @@
 #include "core/watchdog.h"
 #include "core/app_types.h"
 #include "core/error.h"
+#include "core/thermostat.h"
+#include "core/thermostat_config.h"
 
-#include "core/thermostat.h"      // thermostat_core_init, thermostat_core_process_sample
-
-#include "app/task_common.h"      // g_q_sensor_samples
+#include "app/task_common.h"
 #include "app/task_control.h"
 
-#include "core/thermostat_config.h"
-#include "core/thermostat.h"
+#include <stdio.h>
 
-
-#include <stdio.h>                // snprintf
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 static const char *TAG = "CONTROL";
 

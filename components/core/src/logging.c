@@ -1,11 +1,37 @@
+/**
+ * @file    logging.c
+ * @brief   Asynchronous logging subsystem implementation.
+ *
+ * Provides a queue-based logging system that decouples log producers
+ * from log consumers. Tasks can post log messages without blocking,
+ * and a dedicated logger task handles output formatting and display.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "core/logging.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 
-// Global handle to the Logging queue.
-// Tasks will push log messages into this queue, and a Logger task
-// (running in another component) will pull and process them.
+/* ═══════════════════════════════════════════════════════════════════════════
+ * GLOBAL VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Global handle to the logging queue.
+ * Tasks push log messages here; the logger task consumes them.
+ */
 QueueHandle_t g_log_queue = NULL;
 
 void logging_init(void) {

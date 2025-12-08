@@ -1,14 +1,40 @@
+/**
+ * @file    thermostat.c
+ * @brief   Core thermostat control algorithm and state machine.
+ *
+ * This module implements the central thermostat logic including:
+ *   - Hysteresis-based temperature control
+ *   - Multi-mode operation (Heat, Cool, Auto, Off)
+ *   - State management and telemetry data preparation
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "core/thermostat.h"
 #include "core/thermostat_config.h"
 #include "core/config.h"
 #include "core/error.h"
 #include "core/logging.h"
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 static const char *TAG = "TH_CORE";
 
-// Internal state for the thermostat brain.
-// This holds the last decision and data for telemetry / UI.
+/** Internal state for the thermostat control logic */
 static thermostat_state_t s_state;
+
+/** Initialization flag */
 static bool s_initialized = false;
 
 /**

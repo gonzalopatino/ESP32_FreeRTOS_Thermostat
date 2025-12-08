@@ -1,3 +1,23 @@
+/**
+ * @file    thermostat_config.c
+ * @brief   Runtime thermostat configuration management.
+ *
+ * Provides thread-safe access to thermostat configuration parameters
+ * including setpoint and hysteresis values. Configuration is persisted
+ * in NVS and protected by a mutex for concurrent access.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "core/thermostat_config.h"
 #include "core/config.h"
 #include "core/logging.h"
@@ -5,12 +25,16 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 static const char *TAG = "TH_CFG";
 
-// Internal configuration object, not exposed directly.
+/** Internal configuration object (not exposed directly) */
 static thermostat_config_t s_cfg;
 
-// Mutex to protect s_cfg from concurrent access.
+/** Mutex to protect configuration from concurrent access */
 static SemaphoreHandle_t s_cfg_mutex = NULL;
 
 app_error_t thermostat_config_init(void)

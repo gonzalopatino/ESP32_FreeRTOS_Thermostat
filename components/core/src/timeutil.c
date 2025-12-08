@@ -1,3 +1,22 @@
+/**
+ * @file    timeutil.c
+ * @brief   Time synchronization and utility functions.
+ *
+ * Provides SNTP-based time synchronization for accurate timestamping
+ * of telemetry data and system events.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * INCLUDES
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
 #include "core/timeutil.h"
 
 #include "esp_sntp.h"
@@ -6,6 +25,10 @@
 
 #include <time.h>
 #include <sys/time.h>
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * PRIVATE VARIABLES
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 static const char *TAG = "TIMEUTIL";
 

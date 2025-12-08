@@ -1,177 +1,216 @@
+/**
+ * @file    config.h
+ * @brief   Central system configuration for ThermostatRTOS.
+ *
+ * This file contains all compile-time configuration parameters for the
+ * thermostat firmware including:
+ *   - Application identity and versioning
+ *   - Task priorities and stack sizes
+ *   - Hardware pin assignments
+ *   - Peripheral configurations
+ *   - Network and telemetry settings
+ *
+ * @note    Modify this file to customize the firmware for different
+ *          hardware configurations or deployment environments.
+ *
+ * @author  Gonzalo Patino
+ * @company ThinkSense Labs
+ * @date    2024-2025
+ *
+ * @copyright Copyright (c) 2024-2025 ThinkSense Labs. All rights reserved.
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// -----------------------------------------------------------------------------
-// Application identity
-// -----------------------------------------------------------------------------
+/* ═══════════════════════════════════════════════════════════════════════════
+ * APPLICATION IDENTITY
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Application name displayed in logs and telemetry */
 #define APP_NAME        "ThermostatRTOS"
+
+/** Firmware version (semantic versioning) */
 #define APP_FW_VERSION  "0.1.0"
 
-// -----------------------------------------------------------------------------
-// Task priorities (higher number = higher priority)
-// -----------------------------------------------------------------------------
-#define TASK_PRIO_LOGGER      5
-#define TASK_PRIO_SENSORS     4
-#define TASK_PRIO_HEARTBEAT   3
-#define TASK_PRIO_CONTROL     5   // Control is as important as logging
+/* ═══════════════════════════════════════════════════════════════════════════
+ * RTOS TASK CONFIGURATION
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-// -----------------------------------------------------------------------------
-// Task stack sizes (in words, ESP-IDF expects words for xTaskCreate)
-// -----------------------------------------------------------------------------
-#define TASK_STACK_LOGGER     4096
-#define TASK_STACK_SENSORS    4096
-#define TASK_STACK_HEARTBEAT  4096
-#define TASK_STACK_CONTROL    4096
+/**
+ * @name Task Priorities
+ * Higher number = higher priority (FreeRTOS convention)
+ * @{
+ */
+#define TASK_PRIO_LOGGER      5     /**< Logger task priority */
+#define TASK_PRIO_SENSORS     4     /**< Sensor acquisition priority */
+#define TASK_PRIO_HEARTBEAT   3     /**< Heartbeat/LED priority */
+#define TASK_PRIO_CONTROL     5     /**< Control loop priority */
+/** @} */
 
-// -----------------------------------------------------------------------------
-// Periods (milliseconds)
-// -----------------------------------------------------------------------------
-#define PERIOD_LOGGER_MS      50    // how often logger wakes when idle
-#define PERIOD_SENSORS_MS     500   // sensor sampling period
+/**
+ * @name Task Stack Sizes
+ * Stack sizes in words (ESP-IDF uses 4-byte words)
+ * @{
+ */
+#define TASK_STACK_LOGGER     4096  /**< Logger task stack */
+#define TASK_STACK_SENSORS    4096  /**< Sensor task stack */
+#define TASK_STACK_HEARTBEAT  4096  /**< Heartbeat task stack */
+#define TASK_STACK_CONTROL    4096  /**< Control task stack */
+/** @} */
 
-// Telemetry period to backend (cloud "sample_rate")
-#define TELEMETRY_PERIOD_MS  15000  // adjust as needed [ in ms]
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TIMING CONFIGURATION
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
+#define PERIOD_LOGGER_MS      50    /**< Logger wake period (ms) */
+#define PERIOD_SENSORS_MS     500   /**< Sensor sampling period (ms) */
+#define TELEMETRY_PERIOD_MS   15000 /**< Cloud telemetry interval (ms) */
 
-// -----------------------------------------------------------------------------
-// Logging subsystem
-// -----------------------------------------------------------------------------
-#define LOG_BUFFER_LEN        256   // per-record message buffer size
-#define LOG_QUEUE_LENGTH      32    // depth of the logging queue
+/* ═══════════════════════════════════════════════════════════════════════════
+ * LOGGING SUBSYSTEM
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-// -----------------------------------------------------------------------------
-// Thermostat control parameters
-// -----------------------------------------------------------------------------
-#define THERMOSTAT_SETPOINT_C       22.0f   // default target temp (°C)
-#define THERMOSTAT_HYSTERESIS_C      0.5f   // +/- hysteresis band (°C)
+#define LOG_BUFFER_LEN        256   /**< Maximum log message length */
+#define LOG_QUEUE_LENGTH      32    /**< Logging queue depth */
 
-// -----------------------------------------------------------------------------
-// Board pins
-// -----------------------------------------------------------------------------
-#define LED_GPIO              2   // Heartbeat LED
-#define GPIO_HEAT_OUTPUT      12   // Heater relay / output pin
-#define GPIO_COOL_OUTPUT      33   // Heater relay / output pin
+/* ═══════════════════════════════════════════════════════════════════════════
+ * THERMOSTAT CONTROL PARAMETERS
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-// -----------------------------------------------------------------------------
-// LCD 16x2 (HD44780) in 4-bit mode 
-// -----------------------------------------------------------------------------
-// #define LCD_PIN_RS           32
-// #define LCD_PIN_EN           33
+#define THERMOSTAT_SETPOINT_C       22.0f  /**< Default setpoint (°C) */
+#define THERMOSTAT_HYSTERESIS_C      0.5f  /**< Hysteresis band (±°C) */
 
-// #define LCD_PIN_D4           25
-// #define LCD_PIN_D5           26
-// #define LCD_PIN_D6           27
-// #define LCD_PIN_D7           14
+/* ═══════════════════════════════════════════════════════════════════════════
+ * GPIO PIN ASSIGNMENTS
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-#define LCD_PIN_RS           19
-#define LCD_PIN_EN           18
+/**
+ * @name System GPIOs
+ * @{
+ */
+#define LED_GPIO              2     /**< Heartbeat LED */
+#define GPIO_HEAT_OUTPUT      12    /**< Heater relay output */
+#define GPIO_COOL_OUTPUT      33    /**< Cooler relay output */
+/** @} */
 
-#define LCD_PIN_D4           5
-#define LCD_PIN_D5           17
-#define LCD_PIN_D6           16
-#define LCD_PIN_D7           4
+/**
+ * @name LCD Display (HD44780 4-bit mode)
+ * @{
+ */
+#define LCD_PIN_RS           19     /**< Register select pin */
+#define LCD_PIN_EN           18     /**< Enable pin */
+#define LCD_PIN_D4           5      /**< Data bit 4 */
+#define LCD_PIN_D5           17     /**< Data bit 5 */
+#define LCD_PIN_D6           16     /**< Data bit 6 */
+#define LCD_PIN_D7           4      /**< Data bit 7 */
+/** @} */
 
-// -----------------------------------------------------------------------------
-// Buttons 
-// -----------------------------------------------------------------------------
-// Up/down buttons to adjust setpoint
-#define GPIO_BTN_UP              25   // pick your actual pin
-#define GPIO_BTN_DOWN            26   // pick your actual pin
+/**
+ * @name Button Inputs
+ * @{
+ */
+#define GPIO_BTN_UP              25  /**< Setpoint increase button */
+#define GPIO_BTN_DOWN            26  /**< Setpoint decrease button */
+#define GPIO_BTN_MODE            27  /**< Mode cycle button */
+#define BUTTON_EVENT_QUEUE_LEN   8   /**< Button event queue depth */
+#define BUTTON_DEBOUNCE_MS       200 /**< Debounce time (ms) */
+/** @} */
 
-// New: mode button to cycle HEAT / COOL / OFF
-#define GPIO_BTN_MODE            27
+/**
+ * @name Setpoint Limits
+ * @{
+ */
+#define THERMOSTAT_SP_STEP_C     0.5f   /**< Adjustment step (°C) */
+#define THERMOSTAT_SP_MIN_C      15.0f  /**< Minimum setpoint (°C) */
+#define THERMOSTAT_SP_MAX_C      28.0f  /**< Maximum setpoint (°C) */
+/** @} */
 
-// Queue length for button events
-#define BUTTON_EVENT_QUEUE_LEN   8
+/**
+ * @name Button Task Configuration
+ * @{
+ */
+#define TASK_PRIO_BUTTONS        4      /**< Button task priority */
+#define TASK_STACK_BUTTONS       4096   /**< Button task stack */
+/** @} */
 
-// Setpoint adjustment step and limits
-#define THERMOSTAT_SP_STEP_C     0.5f
-#define THERMOSTAT_SP_MIN_C      15.0f
-#define THERMOSTAT_SP_MAX_C      28.0f
+/* ═══════════════════════════════════════════════════════════════════════════
+ * I2C CONFIGURATION
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-// Button debounce time (in ms)
-#define BUTTON_DEBOUNCE_MS       200
+#define I2C_MASTER_SCL_IO        22          /**< I2C clock GPIO */
+#define I2C_MASTER_SDA_IO        21          /**< I2C data GPIO */
+#define I2C_MASTER_PORT          I2C_NUM_0   /**< I2C controller */
+#define I2C_MASTER_FREQ_HZ       100000      /**< I2C frequency (Hz) */
 
-// Task for button handling
-#define TASK_PRIO_BUTTONS        4
-#define TASK_STACK_BUTTONS       4096
+/* ═══════════════════════════════════════════════════════════════════════════
+ * AHT20 TEMPERATURE/HUMIDITY SENSOR
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-// -----------------------------------------------------------------------------
-// I2C master configuration for temperature sensor(s)
-// -----------------------------------------------------------------------------
-#define I2C_MASTER_SCL_IO        22          // ESP32 GPIO for I2C SCL
-#define I2C_MASTER_SDA_IO        21          // ESP32 GPIO for I2C SDA
-#define I2C_MASTER_PORT          I2C_NUM_0   // I2C controller instance
-#define I2C_MASTER_FREQ_HZ       100000      // 100 kHz standard mode
+#define AHT20_I2C_ADDRESS        0x38        /**< AHT20 I2C address */
 
-// -----------------------------------------------------------------------------
-// AHT20 temperature and humidity sensor
-// -----------------------------------------------------------------------------
-#define AHT20_I2C_ADDRESS        0x38
-
-// Initialization command (see AHT20 datasheet)
+/** @name AHT20 Commands */
 #define AHT20_CMD_INIT_BYTE1     0xBE
 #define AHT20_CMD_INIT_BYTE2     0x08
 #define AHT20_CMD_INIT_BYTE3     0x00
-
-// Measurement command (trigger temp + humidity conversion)
 #define AHT20_CMD_MEASURE_BYTE1  0xAC
 #define AHT20_CMD_MEASURE_BYTE2  0x33
 #define AHT20_CMD_MEASURE_BYTE3  0x00
+#define AHT20_MEASURE_DELAY_MS   100         /**< Measurement wait (ms) */
+/** @} */
 
-// Typical measurement time is around 80 ms, we wait a bit more for safety
-#define AHT20_MEASURE_DELAY_MS   100
+/**
+ * @name Display Task Configuration
+ * @{
+ */
+#define TASK_PRIO_DISPLAY        3           /**< Display task priority */
+#define TASK_STACK_DISPLAY       4096        /**< Display task stack */
+/** @} */
 
-// Display/UI
-#define TASK_PRIO_DISPLAY 3
-#define TASK_STACK_DISPLAY 4096
+/* ═══════════════════════════════════════════════════════════════════════════
+ * WIFI / NETWORK CONFIGURATION
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-
-
-// -----------------------------------------------------------------------------
-// Wi-Fi / Network
-// -----------------------------------------------------------------------------
-// Replace with your real SSID and password
+/**
+ * @name WiFi Credentials (Development Only)
+ * @warning These are overwritten by provisioning in production
+ * @{
+ */
 #define WIFI_SSID           "DUPA_2_4_G"
 #define WIFI_PASS           "6045270435"
+#define WIFI_MAX_RETRY      5                /**< Connection retry count */
+/** @} */
 
-// Number of reconnect attempts before giving up (for now just log)
-#define WIFI_MAX_RETRY      5
+/**
+ * @name Network Task Configuration
+ * @{
+ */
+#define TASK_PRIO_NET       4                /**< Network task priority */
+#define TASK_STACK_NET      4096             /**< Network task stack */
+/** @} */
 
-// NET task
-#define TASK_PRIO_NET       4
-#define TASK_STACK_NET      4096
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TELEMETRY SERVER CONFIGURATION
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-// ---------------------------------------------------------------------------
-// Telemetry server configuration
-// ---------------------------------------------------------------------------
-#define TH_SERVER_HOST   "10.0.0.79" // match your current PC IP address (IPv4)
-#define TH_SERVER_PORT   "8000"
-#define TH_SERVER_API_KEY "/api/telemetry/ingest/"
+#define TH_SERVER_HOST      "10.0.0.79"      /**< Backend server IP */
+#define TH_SERVER_PORT      "8000"           /**< Backend server port */
+#define TH_API_INGEST_PATH  "/api/telemetry/ingest/"
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DEVICE IDENTITY
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-
-
-
-// ---------------------------------------------------------------------------
-// Telemetry Device Info
-// ---------------------------------------------------------------------------
-#pragma once
-#define DEVICE_SERIAL "SN-ESP32-THERO-004"
-
-// This is the raw API key we got ONCE from /api/devices/register/
-
-#define DEVICE_API_KEY  "45BVjokdV1YehGxDaPNpb7eT2CBPdWRiAoqpkfsLJxs"
-
-
-// Device identity defaults (used if NVS does not have values yet)
-// Later, provisioning will overwrite these in NVS.
+/**
+ * @name Device Defaults
+ * Used if NVS does not have values; overwritten by provisioning
+ * @{
+ */
+#define DEVICE_SERIAL           "SN-ESP32-THERO-004"
 #define DEVICE_SERIAL_DEFAULT   "SN-ESP32-THERO-004"
+#define DEVICE_API_KEY          "45BVjokdV1YehGxDaPNpb7eT2CBPdWRiAoqpkfsLJxs"
 #define DEVICE_API_KEY_DEFAULT  "45BVjokdV1YehGxDaPNpb7eT2CBPdWRiAoqpkfsLJxs"
+/** @} */
 
-
-// Optional future: versioned API path
-#define TH_API_INGEST_PATH "/api/telemetry/ingest/"
-
-
-#endif  // CONFIG_H
+#endif  /* CONFIG_H */
