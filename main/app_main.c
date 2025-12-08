@@ -2,6 +2,7 @@
 #include "core/logging.h"           // Logging system (queue + log_post)
 #include "core/error.h"             // Error handling utilities (fatal + non-fatal)
 #include "core/watchdog.h"          // Watchdog framework for monitoring task health
+#include "core/provisioning.h"      // First-time setup / WiFi provisioning state
 
 #include "app/task_common.h"        // Shared inter-task queues and helpers
 #include "app/task_sensors.h"       // Sensor task (temperature acquisition)
@@ -44,6 +45,22 @@ void app_main(void) {
     if (watchdog_init() != ESP_OK) {
         error_fatal(ERR_WATCHDOG_INIT_FAILED, "watchdog_init");
     }
+
+    // Initialize provisioning subsystem (NVS for credentials/state).
+    // Must be called early, before checking provisioning state.
+    if (provisioning_init() != APP_ERR_OK) {
+        error_fatal(ERR_GENERIC, "provisioning_init");
+    }
+
+    // Check if device has been provisioned (first-time setup complete)
+    // Use printf directly since logger task isn't running yet
+    bool is_provisioned = provisioning_is_provisioned();
+    printf("\n*** PROVISIONING STATE: %s ***\n\n",
+           is_provisioned ? "PROVISIONED" : "NEEDS SETUP");
+
+    // TODO: In future increments, branch here:
+    //   - If NOT provisioned: enter Setup Mode (softAP + HTTP wizard)
+    //   - If provisioned: continue to Normal Boot
 
     // Create common queues used for inter-task communication.
     // Example: sensor samples → control task.

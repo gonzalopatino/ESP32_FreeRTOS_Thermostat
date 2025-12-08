@@ -6,6 +6,7 @@ idf_component_register(
         "src/thermostat_config.c"
         "src/thermostat.c"
         "src/timeutil.c"
+        "src/provisioning.c"
     INCLUDE_DIRS "include"
     REQUIRES
         freertos
@@ -13,4 +14,5 @@ idf_component_register(
         log
         lwip
         esp_netif
+        nvs_flash
 )
