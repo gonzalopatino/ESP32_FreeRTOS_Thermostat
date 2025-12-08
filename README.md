@@ -329,14 +329,14 @@ See [LICENSE](LICENSE) for full text.
 **Gonzalo Patino**  
 ThinkSense Labs  
 
-📧 gonzalo@thinksense.io  
-🌐 https://thinksense.io  
+📧 gonzalopatino@thinksenselabs.com  
+🌐 https://www.thinksenselabs.com  
 💻 https://github.com/gonzalopatino
 
 ---
 
 <p align="center">
-  <em>Built with ❤️ for the IoT community</em>
+  <em>Built for the Capstone Project at SNHU</em>
 </p>
 
-*Built with ❤️ by ThinkSense Labs*
+*ThinkSense Labs*
