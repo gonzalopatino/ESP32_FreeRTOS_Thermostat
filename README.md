@@ -30,12 +30,13 @@ ThermostatRTOS is a professional embedded firmware for smart thermostat applicat
 |---------|-------------|
 | **Multi-Mode Control** | Heat, Cool, Auto, and Off operating modes |
 | **Hysteresis Regulation** | Configurable ±0.5°C deadband prevents relay chatter |
-| **WiFi Provisioning** | QR code-based secure device setup via captive portal |
+| **WiFi Provisioning** | Captive portal for initial WiFi setup, displays IP on LCD |
+| **QR Code Commissioning** | Dashboard generates QR code with device IP for phone-based API key provisioning |
 | **Cloud Telemetry** | HTTP POST to backend every 15 seconds with signed payloads |
-| **Settings Mode** | Runtime reconfiguration via web interface (hold MODE 5s) |
+| **Settings Mode** | Hold MODE 5s for runtime WiFi/API reconfiguration via web UI |
 | **NVS Persistence** | Setpoint, credentials, and config survive power cycles |
 | **Watchdog Monitoring** | Task health supervision with automatic recovery |
-| **Real-Time Display** | 16x2 LCD showing temperature, setpoint, and mode |
+| **Real-Time Display** | 16x2 LCD showing temperature, setpoint, mode, and IP address |
 
 ---
 
@@ -211,12 +212,25 @@ idf.py -p COM6 flash monitor
 
 ### First Boot: WiFi Provisioning
 
-1. **Power on** the device - LCD shows "Setup Mode"
-2. **Scan QR code** displayed on LCD with your phone
-3. **Connect** to the ESP32's WiFi AP (e.g., `THERMO_XXXX`)
-4. **Enter PIN** shown on LCD for security
-5. **Configure** your home WiFi SSID and password
-6. **Submit** - Device connects and enters normal operation
+1. **Power on** the device - LCD shows "Setup Mode" and broadcasts a WiFi AP
+2. **Connect** to the ESP32's WiFi AP (e.g., `THERMO_XXXX`) using the PIN shown on LCD
+3. **Enter WiFi credentials** via the captive portal web page
+4. **Device connects** to your home WiFi and displays its **IP address** on the LCD
+5. **Register on Dashboard** - Go to the web dashboard and register a new device
+6. **Enter IP address** - Input the device's IP address shown on LCD into the registration form
+7. **Generate QR code** - Click "Update QR Code" to generate the commissioning QR
+8. **Scan with phone** - Scan the QR code with your phone to automatically commission the device with API key
+
+### Settings Mode (Runtime Reconfiguration)
+
+Hold the **MODE button for 5 seconds** to enter Settings Mode:
+- Device enters AP+STA mode (stays connected to WiFi while broadcasting AP)
+- LCD displays the AP name and IP address
+- Connect to the AP and access the web interface to:
+  - Change WiFi SSID/password
+  - Update API key
+  - Perform factory reset
+- Press any button to exit and restart
 
 ### Normal Operation
 
