@@ -137,6 +137,41 @@ void setup_server_set_device_ip(const char *ip);
  */
 bool setup_server_api_key_complete(void);
 
+/**
+ * @brief Start Settings Mode server (AP+STA).
+ *
+ * Starts a SoftAP while maintaining STA connection, allowing user
+ * to access settings page via browser to change WiFi credentials,
+ * API key, or perform factory reset.
+ *
+ * @param[in] device_ip  Current STA IP address (can be NULL if not connected).
+ * @return APP_ERR_OK on success.
+ */
+app_error_t setup_server_start_settings(const char *device_ip);
+
+/**
+ * @brief Stop Settings Mode server and return to normal operation.
+ *
+ * Stops the settings HTTP server and SoftAP, returns to STA-only mode.
+ *
+ * @return APP_ERR_OK on success.
+ */
+app_error_t setup_server_stop_settings(void);
+
+/**
+ * @brief Check if settings mode is currently active.
+ *
+ * @return true if settings server is running.
+ */
+bool setup_server_is_settings_mode(void);
+
+/**
+ * @brief Check if settings were modified and saved.
+ *
+ * @return true if settings were saved (indicating restart may be needed).
+ */
+bool setup_server_settings_saved(void);
+
 #ifdef __cplusplus
 }
 #endif

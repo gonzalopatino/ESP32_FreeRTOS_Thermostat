@@ -1,18 +1,29 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "driver/gpio.h"
+#include "esp_system.h"
+
 #include "core/config.h"
 #include "core/logging.h"
 #include "core/watchdog.h"
 #include "core/error.h"
+#include "core/provisioning.h"
 
 #include "core/thermostat_config.h"
 #include "drivers/drv_buttons.h"
+#include "drivers/drv_display.h"
 #include "core/thermostat.h" // <-- for thermostat_get_mode / thermostat_set_mode
 
 #include "app/task_buttons.h"
+#include "app/setup_server.h"
+
+#include <string.h>                 // strlen
 
 static const char *TAG = "BTN_UI";
+
+// Long-press threshold for settings mode (5 seconds)
+#define SETTINGS_MODE_HOLD_MS  5000
 
 
 
@@ -104,6 +115,121 @@ static void cycle_mode(void)
              mode_to_str(next));
 }
 
+/**
+ * @brief Check if MODE button is being held for settings mode.
+ * 
+ * Called when MODE button press is detected. Monitors if button
+ * stays pressed for SETTINGS_MODE_HOLD_MS milliseconds.
+ * 
+ * @return true if long press detected (settings mode should activate)
+ */
+static bool check_mode_long_press(void)
+{
+    const uint32_t check_interval_ms = 100;
+    uint32_t elapsed_ms = 0;
+    int countdown = 5;
+    
+    // Show initial message
+    drv_display_write_line(0, "Hold for setup:");
+    drv_display_write_line(1, "   5 seconds   ");
+    
+    while (elapsed_ms < SETTINGS_MODE_HOLD_MS) {
+        vTaskDelay(pdMS_TO_TICKS(check_interval_ms));
+        elapsed_ms += check_interval_ms;
+        
+        // Check if button was released (GPIO high = released)
+        if (gpio_get_level(GPIO_BTN_MODE) != 0) {
+            // Button released - just do normal mode cycle
+            return false;
+        }
+        
+        // Update countdown display every second
+        int new_countdown = (SETTINGS_MODE_HOLD_MS - elapsed_ms) / 1000 + 1;
+        if (new_countdown != countdown && new_countdown > 0) {
+            countdown = new_countdown;
+            // Use static strings to avoid format truncation warnings
+            static const char *countdown_msgs[] = {
+                "   Settings 0   ",  // index 0 (unused)
+                "   Settings 1   ",  // 1 second
+                "   Settings 2   ",  // 2 seconds
+                "   Settings 3   ",  // 3 seconds
+                "   Settings 4   ",  // 4 seconds
+                "   Settings 5   ",  // 5 seconds
+            };
+            int idx = (countdown > 5) ? 5 : countdown;
+            drv_display_write_line(1, countdown_msgs[idx]);
+        }
+    }
+    
+    // Button held for full duration - settings mode!
+    return true;
+}
+
+/**
+ * @brief Enter settings mode directly.
+ * 
+ * Starts the settings AP and shows IP on LCD. Waits for any button press to exit.
+ */
+static void enter_settings_mode(void)
+{
+    log_post(LOG_LEVEL_INFO, TAG, "Entering Settings Mode...");
+    
+    drv_display_clear();
+    drv_display_write_line(0, "Settings Mode");
+    drv_display_write_line(1, "Starting AP...");
+    
+    // Start settings server (AP + STA mode)
+    app_error_t err = setup_server_start_settings(NULL);
+    if (err != APP_ERR_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG, "Failed to start settings mode!");
+        drv_display_clear();
+        drv_display_write_line(0, "Settings Error!");
+        drv_display_write_line(1, "Try again");
+        vTaskDelay(pdMS_TO_TICKS(3000));
+        return;
+    }
+    
+    // Get AP SSID and PIN
+    char ap_ssid[33];
+    setup_server_get_ssid(ap_ssid, sizeof(ap_ssid));
+    const char *pin = setup_server_get_pin();
+    
+    // Show on LCD: line 1 = short SSID, line 2 = AP IP
+    drv_display_clear();
+    const char *short_ssid = (strlen(ap_ssid) > 10) ? (ap_ssid + 10) : ap_ssid;
+    drv_display_write_line(0, short_ssid);
+    drv_display_write_line(1, "192.168.4.1");
+    
+    log_post(LOG_LEVEL_INFO, TAG, "Settings AP: %s, PIN: %s, IP: 192.168.4.1", ap_ssid, pin);
+    
+    // Clear button queue to ignore any pending events
+    QueueHandle_t q = drv_buttons_get_queue();
+    button_event_t evt;
+    while (xQueueReceive(q, &evt, 0) == pdTRUE) {
+        // Discard any queued events
+    }
+    
+    // Wait for any button press to exit settings mode
+    log_post(LOG_LEVEL_INFO, TAG, "Press any button to exit settings mode");
+    while (1) {
+        if (xQueueReceive(q, &evt, pdMS_TO_TICKS(100)) == pdTRUE) {
+            log_post(LOG_LEVEL_INFO, TAG, "Button pressed - exiting settings mode");
+            break;
+        }
+        watchdog_feed();
+    }
+    
+    // Stop settings mode and restart
+    log_post(LOG_LEVEL_INFO, TAG, "Stopping settings mode, restarting...");
+    drv_display_clear();
+    drv_display_write_line(0, "Exiting...");
+    drv_display_write_line(1, "Restarting");
+    
+    setup_server_stop_settings();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
+}
+
 /* ---------------- Task ---------------- */
 
 /**
@@ -159,8 +285,15 @@ static void task_buttons(void *arg)
 
             case BUTTON_EVENT_MODE:
                 if ((now - last_mode_ticks) >= debounce_ticks) {
-                    cycle_mode();
-                    last_mode_ticks = now;
+                    // Check for long press (settings mode)
+                    if (check_mode_long_press()) {
+                        // Long press detected - enter settings mode directly
+                        enter_settings_mode();
+                    } else {
+                        // Short press - cycle mode
+                        cycle_mode();
+                    }
+                    last_mode_ticks = xTaskGetTickCount();  // Update after potential long wait
                 } else {
                     log_post(LOG_LEVEL_DEBUG, TAG, "MODE ignored (debounce)");
                 }

@@ -1452,3 +1452,437 @@ bool setup_server_api_key_complete(void)
 {
     return s_api_key_complete;
 }
+
+// -----------------------------------------------------------------------------
+// Settings Mode Implementation
+// -----------------------------------------------------------------------------
+
+// Settings mode state
+static bool s_settings_mode = false;
+static bool s_settings_saved = false;
+static char s_settings_device_ip[16] = "Not connected";
+
+// Compact Settings page HTML - allows changing WiFi, API key, and factory reset
+static const char *HTML_SETTINGS_PAGE_TEMPLATE =
+"<!DOCTYPE html><html><head><meta charset=\"UTF-8\">"
+"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+"<title>Settings</title><style>"
+"*{box-sizing:border-box}body{font-family:sans-serif;margin:0;padding:20px;"
+"background:linear-gradient(135deg,#1e3a5f,#2d5a87);min-height:100vh}"
+".c{max-width:420px;margin:0 auto;background:#fff;padding:24px;border-radius:12px;"
+"box-shadow:0 10px 40px rgba(0,0,0,0.3)}"
+"h1{text-align:center;color:#1e3a5f;margin:0 0 10px;font-size:22px}"
+".sub{text-align:center;color:#666;margin-bottom:20px;font-size:13px}"
+".section{background:#f8f9fa;padding:16px;border-radius:8px;margin-bottom:16px}"
+".section h3{margin:0 0 12px;font-size:15px;color:#333}"
+"label{display:block;color:#555;font-size:13px;margin-bottom:4px}"
+"input[type=text],input[type=password]{width:100%%;padding:10px;font-size:14px;"
+"border:2px solid #e0e0e0;border-radius:6px;margin-bottom:10px}"
+"input:focus{outline:none;border-color:#1e3a5f}"
+".btn{width:100%%;padding:12px;font-size:15px;color:#fff;background:#1e3a5f;"
+"border:none;border-radius:6px;cursor:pointer;margin-top:8px}"
+".btn:hover{background:#2d5a87}"
+".btn-danger{background:#dc3545}.btn-danger:hover{background:#c82333}"
+".btn-exit{background:#6c757d}.btn-exit:hover{background:#545b62}"
+".ok{background:#d4edda;color:#155724;padding:12px;border-radius:6px;text-align:center;"
+"margin-bottom:12px;display:none}"
+".err{background:#f8d7da;color:#721c24;padding:12px;border-radius:6px;text-align:center;"
+"margin-bottom:12px;display:none}"
+".info{background:#e7f3ff;border-left:4px solid #0066cc;padding:12px;margin-bottom:16px;"
+"font-size:13px;color:#004085}"
+".danger-zone{background:#fff5f5;border:2px solid #dc3545;padding:16px;border-radius:8px}"
+".danger-zone h3{color:#dc3545;margin:0 0 8px}"
+".danger-zone p{color:#666;font-size:13px;margin:0 0 12px}"
+"</style></head><body><div class=\"c\">"
+"<h1>&#9881; Device Settings</h1>"
+"<p class=\"sub\">STA IP: <b>%s</b> | AP: 192.168.4.1</p>"
+"<div class=\"ok\" id=\"ok\"></div><div class=\"err\" id=\"err\"></div>"
+"<div class=\"info\">Settings Mode active. Connect to <b>%s</b> WiFi to access this page.</div>"
+"<div class=\"section\"><h3>&#128246; WiFi Network</h3>"
+"<label>SSID</label><input type=\"text\" id=\"ssid\" value=\"%s\">"
+"<label>Password</label><input type=\"password\" id=\"wpwd\" placeholder=\"Enter new password\">"
+"<button class=\"btn\" onclick=\"saveWifi()\">Save WiFi</button></div>"
+"<div class=\"section\"><h3>&#128273; API Key</h3>"
+"<label>Current Key</label><input type=\"text\" id=\"akey\" value=\"%s\">"
+"<button class=\"btn\" onclick=\"saveKey()\">Save API Key</button></div>"
+"<div class=\"danger-zone\"><h3>&#9888; Factory Reset</h3>"
+"<p>Erase all settings and return to first-time setup mode.</p>"
+"<button class=\"btn btn-danger\" onclick=\"factoryReset()\">Factory Reset</button></div>"
+"<button class=\"btn btn-exit\" onclick=\"exitSettings()\" style=\"margin-top:20px\">Exit Settings Mode</button>"
+"</div><script>"
+"function showOk(m){var e=document.getElementById('ok');e.innerHTML=m;e.style.display='block';"
+"document.getElementById('err').style.display='none';}"
+"function showErr(m){var e=document.getElementById('err');e.innerHTML=m;e.style.display='block';"
+"document.getElementById('ok').style.display='none';}"
+"function saveWifi(){"
+"var s=document.getElementById('ssid').value.trim();"
+"var p=document.getElementById('wpwd').value;"
+"if(!s){showErr('SSID required');return;}"
+"fetch('/settings/wifi',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},"
+"body:'ssid='+encodeURIComponent(s)+'&password='+encodeURIComponent(p)})"
+".then(function(r){return r.json();})"
+".then(function(j){if(j.success)showOk('WiFi saved! Restart device to apply.');else showErr(j.error||'Failed');})"
+".catch(function(e){showErr('Network error');});}"
+"function saveKey(){"
+"var k=document.getElementById('akey').value.trim();"
+"if(k.length<10){showErr('API key too short');return;}"
+"fetch('/settings/apikey',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},"
+"body:'api_key='+encodeURIComponent(k)})"
+".then(function(r){return r.json();})"
+".then(function(j){if(j.success)showOk('API key saved!');else showErr(j.error||'Failed');})"
+".catch(function(e){showErr('Network error');});}"
+"function factoryReset(){"
+"if(!confirm('Are you sure? This will erase all settings and require re-setup.'))return;"
+"fetch('/settings/factory-reset',{method:'POST'})"
+".then(function(r){return r.json();})"
+".then(function(j){if(j.success){showOk('Factory reset done. Restarting...');setTimeout(function(){location.reload();},3000);}"
+"else showErr(j.error||'Failed');})"
+".catch(function(e){showErr('Network error');});}"
+"function exitSettings(){"
+"fetch('/settings/exit',{method:'POST'})"
+".then(function(r){return r.json();})"
+".then(function(j){if(j.success)showOk('Exiting settings mode. Restarting...');else showErr(j.error||'Failed');})"
+".catch(function(e){showErr('Network error');});}"
+"</script></body></html>";
+
+// Handler: Settings page GET
+static esp_err_t handler_settings_get(httpd_req_t *req)
+{
+    log_post(LOG_LEVEL_INFO, TAG, "HTTP GET /settings");
+
+    // Get current WiFi SSID and API key for display
+    prov_wifi_creds_t creds = {0};
+    char api_key[128] = {0};
+    
+    provisioning_get_wifi_creds(&creds);
+    provisioning_get_api_key(api_key, sizeof(api_key));
+
+    // Mask API key for display (show first 8 chars + ...)
+    char masked_key[20] = "Not set";
+    if (strlen(api_key) > 10) {
+        snprintf(masked_key, sizeof(masked_key), "%.8s...", api_key);
+    }
+
+    // Build HTML with current values
+    char *html_buf = malloc(8192);
+    if (!html_buf) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Out of memory");
+        return ESP_FAIL;
+    }
+
+    snprintf(html_buf, 8192, HTML_SETTINGS_PAGE_TEMPLATE,
+             s_settings_device_ip,  // STA IP
+             s_ap_ssid,             // AP SSID
+             creds.ssid,            // Current WiFi SSID
+             masked_key);           // Masked API key
+
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, html_buf, strlen(html_buf));
+    free(html_buf);
+    return ESP_OK;
+}
+
+// Handler: Save WiFi settings POST
+static esp_err_t handler_settings_wifi_post(httpd_req_t *req)
+{
+    log_post(LOG_LEVEL_INFO, TAG, "HTTP POST /settings/wifi");
+
+    char buf[256] = {0};
+    int ret = httpd_req_recv(req, buf, sizeof(buf) - 1);
+    if (ret <= 0) {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":false,\"error\":\"No data\"}");
+        return ESP_OK;
+    }
+
+    // Parse SSID and password
+    char ssid[64] = {0};
+    char password[64] = {0};
+
+    char *ssid_start = strstr(buf, "ssid=");
+    if (ssid_start) {
+        ssid_start += 5;
+        char *ssid_end = strchr(ssid_start, '&');
+        size_t len = ssid_end ? (size_t)(ssid_end - ssid_start) : strlen(ssid_start);
+        if (len >= sizeof(ssid)) len = sizeof(ssid) - 1;
+        strncpy(ssid, ssid_start, len);
+        for (char *p = ssid; *p; p++) if (*p == '+') *p = ' ';
+    }
+
+    char *pwd_start = strstr(buf, "password=");
+    if (pwd_start) {
+        pwd_start += 9;
+        char *pwd_end = strchr(pwd_start, '&');
+        size_t len = pwd_end ? (size_t)(pwd_end - pwd_start) : strlen(pwd_start);
+        if (len >= sizeof(password)) len = sizeof(password) - 1;
+        strncpy(password, pwd_start, len);
+        for (char *p = password; *p; p++) if (*p == '+') *p = ' ';
+    }
+
+    if (strlen(ssid) == 0) {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":false,\"error\":\"SSID required\"}");
+        return ESP_OK;
+    }
+
+    // If password is empty, keep the existing password
+    if (strlen(password) == 0) {
+        prov_wifi_creds_t existing;
+        if (provisioning_get_wifi_creds(&existing) == APP_ERR_OK) {
+            strncpy(password, existing.password, sizeof(password) - 1);
+        }
+    }
+
+    prov_wifi_creds_t new_creds = {0};
+    strncpy(new_creds.ssid, ssid, sizeof(new_creds.ssid) - 1);
+    strncpy(new_creds.password, password, sizeof(new_creds.password) - 1);
+
+    if (provisioning_set_wifi_creds(&new_creds) == APP_ERR_OK) {
+        log_post(LOG_LEVEL_INFO, TAG, "WiFi credentials updated: %s", ssid);
+        s_settings_saved = true;
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":true}");
+    } else {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":false,\"error\":\"Failed to save\"}");
+    }
+
+    return ESP_OK;
+}
+
+// Handler: Save API key POST
+static esp_err_t handler_settings_apikey_post(httpd_req_t *req)
+{
+    log_post(LOG_LEVEL_INFO, TAG, "HTTP POST /settings/apikey");
+
+    char buf[256] = {0};
+    int ret = httpd_req_recv(req, buf, sizeof(buf) - 1);
+    if (ret <= 0) {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":false,\"error\":\"No data\"}");
+        return ESP_OK;
+    }
+
+    char api_key[128] = {0};
+    char *key_start = strstr(buf, "api_key=");
+    if (key_start) {
+        key_start += 8;
+        char *key_end = strchr(key_start, '&');
+        size_t len = key_end ? (size_t)(key_end - key_start) : strlen(key_start);
+        if (len > sizeof(api_key) - 1) len = sizeof(api_key) - 1;
+        strncpy(api_key, key_start, len);
+    }
+
+    if (strlen(api_key) < 10) {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":false,\"error\":\"API key too short\"}");
+        return ESP_OK;
+    }
+
+    if (provisioning_set_api_key(api_key) == APP_ERR_OK) {
+        log_post(LOG_LEVEL_INFO, TAG, "API key updated");
+        s_settings_saved = true;
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":true}");
+    } else {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":false,\"error\":\"Failed to save\"}");
+    }
+
+    return ESP_OK;
+}
+
+// Handler: Factory reset POST
+static esp_err_t handler_settings_factory_reset(httpd_req_t *req)
+{
+    log_post(LOG_LEVEL_WARN, TAG, "HTTP POST /settings/factory-reset - FACTORY RESET REQUESTED");
+
+    if (provisioning_factory_reset() == APP_ERR_OK) {
+        log_post(LOG_LEVEL_WARN, TAG, "Factory reset complete - will restart");
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":true}");
+
+        // Delay and restart
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        esp_restart();
+    } else {
+        httpd_resp_set_type(req, "application/json");
+        httpd_resp_sendstr(req, "{\"success\":false,\"error\":\"Reset failed\"}");
+    }
+
+    return ESP_OK;
+}
+
+// Handler: Exit settings mode POST
+static esp_err_t handler_settings_exit(httpd_req_t *req)
+{
+    log_post(LOG_LEVEL_INFO, TAG, "HTTP POST /settings/exit - Exiting settings mode");
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr(req, "{\"success\":true}");
+
+    // Delay and restart to apply any changes
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    esp_restart();
+
+    return ESP_OK;
+}
+
+// Settings root redirects to /settings
+static esp_err_t handler_settings_root(httpd_req_t *req)
+{
+    httpd_resp_set_status(req, "302 Found");
+    httpd_resp_set_hdr(req, "Location", "/settings");
+    httpd_resp_send(req, NULL, 0);
+    return ESP_OK;
+}
+
+app_error_t setup_server_start_settings(const char *device_ip)
+{
+    if (s_settings_mode) {
+        log_post(LOG_LEVEL_WARN, TAG, "Settings mode already active");
+        return APP_ERR_OK;
+    }
+
+    log_post(LOG_LEVEL_INFO, TAG, "Starting Settings Mode...");
+
+    // Save device IP for display
+    if (device_ip) {
+        strncpy(s_settings_device_ip, device_ip, sizeof(s_settings_device_ip) - 1);
+    }
+
+    // Generate new PIN for security
+    generate_pin();
+    s_settings_saved = false;
+
+    // If event group doesn't exist, create it
+    if (!s_wifi_event_group) {
+        s_wifi_event_group = xEventGroupCreate();
+    }
+
+    // Get MAC address for SSID
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+    snprintf(s_ap_ssid, sizeof(s_ap_ssid), "%s%02X%02X",
+             SETUP_AP_SSID_PREFIX, mac[4], mac[5]);
+
+    // Configure AP while keeping STA connected
+    wifi_config_t ap_config = {
+        .ap = {
+            .ssid_len = strlen(s_ap_ssid),
+            .channel = SETUP_AP_CHANNEL,
+            .max_connection = SETUP_AP_MAX_CONN,
+            .authmode = WIFI_AUTH_OPEN,
+            .pmf_cfg = { .required = false },
+        },
+    };
+    memcpy(ap_config.ap.ssid, s_ap_ssid, strlen(s_ap_ssid));
+
+    // Switch to APSTA mode (keep STA connection, add AP)
+    esp_wifi_set_mode(WIFI_MODE_APSTA);
+    esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+
+    log_post(LOG_LEVEL_INFO, TAG, "Settings AP started: %s", s_ap_ssid);
+
+    // Start HTTP server for settings
+    if (s_http_server) {
+        httpd_stop(s_http_server);
+        s_http_server = NULL;
+    }
+
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.uri_match_fn = httpd_uri_match_wildcard;
+    config.max_uri_handlers = 10;
+    config.max_open_sockets = 4;
+
+    esp_err_t err = httpd_start(&s_http_server, &config);
+    if (err != ESP_OK) {
+        log_post(LOG_LEVEL_ERROR, TAG, "Failed to start settings server: %s", esp_err_to_name(err));
+        return ERR_GENERIC;
+    }
+
+    // Register settings handlers
+    httpd_uri_t uri_root = {
+        .uri = "/",
+        .method = HTTP_GET,
+        .handler = handler_settings_root,
+    };
+    httpd_register_uri_handler(s_http_server, &uri_root);
+
+    httpd_uri_t uri_settings = {
+        .uri = "/settings",
+        .method = HTTP_GET,
+        .handler = handler_settings_get,
+    };
+    httpd_register_uri_handler(s_http_server, &uri_settings);
+
+    httpd_uri_t uri_wifi = {
+        .uri = "/settings/wifi",
+        .method = HTTP_POST,
+        .handler = handler_settings_wifi_post,
+    };
+    httpd_register_uri_handler(s_http_server, &uri_wifi);
+
+    httpd_uri_t uri_apikey = {
+        .uri = "/settings/apikey",
+        .method = HTTP_POST,
+        .handler = handler_settings_apikey_post,
+    };
+    httpd_register_uri_handler(s_http_server, &uri_apikey);
+
+    httpd_uri_t uri_factory = {
+        .uri = "/settings/factory-reset",
+        .method = HTTP_POST,
+        .handler = handler_settings_factory_reset,
+    };
+    httpd_register_uri_handler(s_http_server, &uri_factory);
+
+    httpd_uri_t uri_exit = {
+        .uri = "/settings/exit",
+        .method = HTTP_POST,
+        .handler = handler_settings_exit,
+    };
+    httpd_register_uri_handler(s_http_server, &uri_exit);
+
+    s_settings_mode = true;
+    s_server_running = true;
+
+    log_post(LOG_LEVEL_INFO, TAG, "Settings Mode ready! PIN: %s, AP: %s", s_pin, s_ap_ssid);
+
+    return APP_ERR_OK;
+}
+
+app_error_t setup_server_stop_settings(void)
+{
+    if (!s_settings_mode) {
+        return APP_ERR_OK;
+    }
+
+    log_post(LOG_LEVEL_INFO, TAG, "Stopping Settings Mode...");
+
+    // Stop HTTP server
+    if (s_http_server) {
+        httpd_stop(s_http_server);
+        s_http_server = NULL;
+    }
+
+    // Switch back to STA-only mode
+    esp_wifi_set_mode(WIFI_MODE_STA);
+
+    s_settings_mode = false;
+    s_server_running = false;
+
+    log_post(LOG_LEVEL_INFO, TAG, "Settings Mode stopped");
+
+    return APP_ERR_OK;
+}
+
+bool setup_server_is_settings_mode(void)
+{
+    return s_settings_mode;
+}
+
+bool setup_server_settings_saved(void)
+{
+    return s_settings_saved;
+}

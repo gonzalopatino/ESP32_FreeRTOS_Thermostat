@@ -23,7 +23,7 @@
 
 #include "app/task_net.h"
 
-#include <string.h>                 // strlen, snprintf
+#include <string.h>                 // strlen, strncpy
 
 #include "drivers/drv_display.h"    // LCD driver for setup mode display
 #include "app/setup_server.h"       // SoftAP + HTTP setup server
@@ -81,6 +81,14 @@ static void start_normal_mode(void) {
     task_heartbeat_start();
 
     thermostat_set_mode(THERMOSTAT_MODE_AUTO);
+    
+    log_post(LOG_LEVEL_INFO, "APP", "Normal mode running - hold MODE 5s for settings");
+    
+    // Note: Settings mode is handled directly by button task (long press on MODE)
+    // Main task can just idle or do other work
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
 }
 
 /**

@@ -17,6 +17,7 @@
 #include "core/watchdog.h"
 #include "core/error.h"
 #include "core/timeutil.h"        // timeutil_init_sntp, timeutil_is_time_set, timeutil_get_iso8601
+#include "core/provisioning.h"    // provisioned WiFi + API key
 
 #include "app/task_common.h"      // g_q_telemetry_state, thermostat_state_t
 
@@ -75,35 +76,30 @@ static void init_nvs(void)
     }
 }
 
-// --- Device credentials in NVS ------------------------------------------
-// Temporary dev helper: always overwrite NVS with the compile-time defaults.
-// This fixes stale values (like SN-ESP32-THERMO-001) left from older builds.
+// --- Device credentials from provisioning -------------------------------
+// Load device credentials from provisioning system (NVS).
+// Falls back to compile-time defaults if not provisioned.
 
-static void device_creds_init_from_nvs_or_defaults(void)
+static void device_creds_init_from_provisioning(void)
 {
-    nvs_handle_t nvs;
-    esp_err_t err = nvs_open("device", NVS_READWRITE, &nvs);
-    if (err != ESP_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG,
-                 "nvs_open(\"device\") failed: %s", esp_err_to_name(err));
-        // Fallback: just use defaults in RAM
-        strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
+    // Try to get API key from provisioning
+    char api_key_buf[128] = {0};
+    if (provisioning_get_api_key(api_key_buf, sizeof(api_key_buf)) == APP_ERR_OK 
+        && strlen(api_key_buf) > 10) {
+        strlcpy(s_device_api_key, api_key_buf, sizeof(s_device_api_key));
+        log_post(LOG_LEVEL_INFO, TAG, "Using provisioned API key (len=%u)", 
+                 (unsigned)strlen(s_device_api_key));
+    } else {
+        // Fallback to compile-time default
         strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
-        return;
+        log_post(LOG_LEVEL_WARN, TAG, "No provisioned API key, using default");
     }
 
-    // Force-update NVS to match our current defaults
-    ESP_ERROR_CHECK(nvs_set_str(nvs, "serial", DEVICE_SERIAL_DEFAULT));
-    ESP_ERROR_CHECK(nvs_set_str(nvs, "api_key", DEVICE_API_KEY_DEFAULT));
-    ESP_ERROR_CHECK(nvs_commit(nvs));
-    nvs_close(nvs);
-
-    // Load into RAM
+    // Serial is still from compile-time default (could be provisioned later)
     strlcpy(s_device_serial, DEVICE_SERIAL_DEFAULT, sizeof(s_device_serial));
-    strlcpy(s_device_api_key, DEVICE_API_KEY_DEFAULT, sizeof(s_device_api_key));
-
+    
     log_post(LOG_LEVEL_INFO, TAG,
-             "Device creds UPDATED in NVS: serial=\"%s\" (api_key len=%u)",
+             "Device creds loaded: serial=\"%s\" (api_key len=%u)",
              s_device_serial,
              (unsigned)strlen(s_device_api_key));
 }
@@ -249,7 +245,7 @@ static void task_net(void *arg)
     watchdog_register_current("NET");
 
     init_nvs();
-    device_creds_init_from_nvs_or_defaults();
+    device_creds_init_from_provisioning();
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -276,10 +272,24 @@ static void task_net(void *arg)
 
     wifi_config_t wifi_config = (wifi_config_t){ 0 };
 
-    snprintf((char *)wifi_config.sta.ssid,
-             sizeof(wifi_config.sta.ssid), "%s", WIFI_SSID);
-    snprintf((char *)wifi_config.sta.password,
-             sizeof(wifi_config.sta.password), "%s", WIFI_PASS);
+    // Get WiFi credentials from provisioning (or fall back to defaults)
+    prov_wifi_creds_t wifi_creds = {0};
+    
+    if (provisioning_get_wifi_creds(&wifi_creds) == APP_ERR_OK 
+        && strlen(wifi_creds.ssid) > 0) {
+        strlcpy((char *)wifi_config.sta.ssid, wifi_creds.ssid,
+                sizeof(wifi_config.sta.ssid));
+        strlcpy((char *)wifi_config.sta.password, wifi_creds.password,
+                sizeof(wifi_config.sta.password));
+        log_post(LOG_LEVEL_INFO, TAG, "Using provisioned WiFi: SSID=\"%s\"", wifi_creds.ssid);
+    } else {
+        // Fallback to compile-time defaults
+        strlcpy((char *)wifi_config.sta.ssid, WIFI_SSID,
+                sizeof(wifi_config.sta.ssid));
+        strlcpy((char *)wifi_config.sta.password, WIFI_PASS,
+                sizeof(wifi_config.sta.password));
+        log_post(LOG_LEVEL_WARN, TAG, "No provisioned WiFi, using default SSID=\"%s\"", WIFI_SSID);
+    }
 
     wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
 
