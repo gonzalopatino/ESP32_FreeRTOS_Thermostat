@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/ESP--IDF-v5.5.1-brightgreen?style=for-the-badge&logo=espressif" alt="ESP-IDF"/>
   <img src="https://img.shields.io/badge/Platform-ESP32-blue?style=for-the-badge" alt="Platform"/>
   <img src="https://img.shields.io/badge/RTOS-FreeRTOS-orange?style=for-the-badge" alt="FreeRTOS"/>
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"/>
+  <img src="https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge" alt="License"/>
 </p>
 
 <p align="center">
@@ -18,8 +18,8 @@
 
 ThermostatRTOS is a professional embedded firmware for smart thermostat applications. It provides precise temperature control with hysteresis-based regulation, real-time cloud telemetry, and a user-friendly interface with LCD display and physical button controls.
 
-**Author:** Gonzalo Patino  
-**Company:** ThinkSense Labs  
+**Author:** Gonzalo Patino
+**Company:** Southern New Hampshire University     
 **Version:** 0.1.0
 
 ---
@@ -308,35 +308,31 @@ The device sends JSON telemetry to a configurable backend:
 ## License
 
 ```
-MIT License
+Proprietary License
 
-Copyright (c) 2024-2025 ThinkSense Labs
-Author: Gonzalo Patino
+Copyright (c) 2024-2025 Gonzalo Patino
+All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software...
+This software is submitted as part of the Capstone Project at Southern New
+Hampshire University (SNHU). Access is granted solely to authorized SNHU
+faculty and staff for academic evaluation purposes.
 ```
 
-See [LICENSE](LICENSE) for full text.
+See [LICENSE](LICENSE) for full terms and conditions.
 
 ---
 
 ## Contact
 
 **Gonzalo Patino**  
-ThinkSense Labs  
+Southern New Hampshire University  
+Capstone Project  
 
-📧 gonzalopatino@thinksenselabs.com  
-🌐 https://www.thinksenselabs.com  
+📧 gonzalopatino@snhu.edu  
 💻 https://github.com/gonzalopatino
 
 ---
 
 <p align="center">
-  <em>Built for the Capstone Project at SNHU</em>
+  <em>Built for the Capstone Project at Southern New Hampshire University</em>
 </p>
-
-*ThinkSense Labs*
