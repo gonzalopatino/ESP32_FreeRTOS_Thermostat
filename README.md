@@ -1,201 +1,328 @@
 # ThermostatRTOS
 
-[![License](https://img.shields.io/badge/License-Proprietary-blue.svg)](LICENSE)
-[![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.5.1-green.svg)](https://github.com/espressif/esp-idf)
-[![Platform](https://img.shields.io/badge/Platform-ESP32-orange.svg)](https://www.espressif.com/en/products/socs/esp32)
+<p align="center">
+  <img src="https://img.shields.io/badge/ESP--IDF-v5.5.1-brightgreen?style=for-the-badge&logo=espressif" alt="ESP-IDF"/>
+  <img src="https://img.shields.io/badge/Platform-ESP32-blue?style=for-the-badge" alt="Platform"/>
+  <img src="https://img.shields.io/badge/RTOS-FreeRTOS-orange?style=for-the-badge" alt="FreeRTOS"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"/>
+</p>
 
-**Professional Smart Thermostat Firmware**
-
-A production-grade smart thermostat system built on ESP32 with FreeRTOS, featuring WiFi connectivity, cloud telemetry, and a responsive user interface.
+<p align="center">
+  <strong>Production-Grade Smart Thermostat Firmware</strong><br>
+  <em>Built on ESP32 with FreeRTOS for reliable HVAC control</em>
+</p>
 
 ---
 
-## 🏢 About
+## Overview
 
-**ThinkSense Labs** - Building intelligent IoT solutions for smart homes and buildings.
+ThermostatRTOS is a professional embedded firmware for smart thermostat applications. It provides precise temperature control with hysteresis-based regulation, real-time cloud telemetry, and a user-friendly interface with LCD display and physical button controls.
 
 **Author:** Gonzalo Patino  
 **Company:** ThinkSense Labs  
-**Version:** 0.1.0  
+**Version:** 0.1.0
 
 ---
 
-## ✨ Features
+## Key Features
 
-- **Multi-Mode Operation**: Heat, Cool, Auto, and Off modes
-- **Precision Control**: Hysteresis-based temperature regulation
-- **Cloud Connectivity**: Real-time telemetry to backend server
-- **WiFi Provisioning**: Secure QR code-based device setup
-- **Settings Mode**: Runtime configuration via web interface
-- **Watchdog Monitoring**: Robust task health supervision
-- **LCD Display**: Real-time temperature and status display
-- **Physical Controls**: Button-based setpoint adjustment
+| Feature | Description |
+|---------|-------------|
+| **Multi-Mode Control** | Heat, Cool, Auto, and Off operating modes |
+| **Hysteresis Regulation** | Configurable ±0.5°C deadband prevents relay chatter |
+| **WiFi Provisioning** | QR code-based secure device setup via captive portal |
+| **Cloud Telemetry** | HTTP POST to backend every 15 seconds with signed payloads |
+| **Settings Mode** | Runtime reconfiguration via web interface (hold MODE 5s) |
+| **NVS Persistence** | Setpoint, credentials, and config survive power cycles |
+| **Watchdog Monitoring** | Task health supervision with automatic recovery |
+| **Real-Time Display** | 16x2 LCD showing temperature, setpoint, and mode |
 
 ---
 
-## 📁 Project Structure
+## System Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      APPLICATION LAYER                          │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐ │
+│  │ Sensors  │ │ Control  │ │ Display  │ │ Network  │ │Buttons │ │
+│  │   Task   │ │   Task   │ │   Task   │ │   Task   │ │  Task  │ │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └───┬────┘ │
+├───────┼────────────┼────────────┼────────────┼───────────┼──────┤
+│       │            │     CORE LAYER          │           │      │
+│       ▼            ▼            ▼            ▼           ▼      │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Thermostat Engine  │  Config (NVS)  │  Logging Queue  │    │
+│  │  Provisioning       │  Boot Mode     │  Error Handler  │    │
+│  └─────────────────────────────────────────────────────────┘    │
+├──────────────────────────────────────────────────────────────────┤
+│                 HARDWARE ABSTRACTION LAYER                       │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐        │
+│  │  drv_temp     │  │  drv_display  │  │  drv_buttons  │        │
+│  │  (AHT20/I2C)  │  │  (HD44780)    │  │  (GPIO IRQ)   │        │
+│  └───────────────┘  └───────────────┘  └───────────────┘        │
+├──────────────────────────────────────────────────────────────────┤
+│              ESP-IDF v5.5.1 / FreeRTOS Kernel                    │
+│         WiFi • NVS • HTTP Server • I2C • GPIO • SNTP            │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Project Structure
 
 ```
 thermostat/
-├── main/                           # Application entry point
-│   └── app_main.c                  # Main application bootstrap
+├── main/
+│   ├── app_main.c              # Entry point, boot mode orchestration
+│   └── CMakeLists.txt
 │
 ├── components/
-│   ├── core/                       # Core business logic
+│   ├── core/                   # Business logic layer
 │   │   ├── include/core/
-│   │   │   ├── config.h            # System configuration
-│   │   │   ├── thermostat.h        # Thermostat state machine
-│   │   │   ├── thermostat_config.h # Runtime configuration
-│   │   │   ├── logging.h           # Logging subsystem
-│   │   │   ├── error.h             # Error handling
-│   │   │   ├── watchdog.h          # Task health monitoring
-│   │   │   ├── provisioning.h      # Device provisioning
-│   │   │   └── boot_mode.h         # Boot mode management
+│   │   │   ├── config.h        # Central configuration (pins, timing, etc.)
+│   │   │   ├── thermostat.h    # Control algorithm interface
+│   │   │   ├── thermostat_config.h  # Runtime config (setpoint, hysteresis)
+│   │   │   ├── provisioning.h  # WiFi/API key storage
+│   │   │   ├── boot_mode.h     # NORMAL vs SETUP mode selection
+│   │   │   ├── logging.h       # Async logging queue
+│   │   │   ├── error.h         # Error handling
+│   │   │   ├── watchdog.h      # Task health monitoring
+│   │   │   └── timeutil.h      # SNTP time sync
 │   │   └── src/
-│   │       ├── thermostat.c        # Control algorithm
-│   │       ├── thermostat_config.c # NVS configuration
-│   │       └── ...
+│   │       ├── thermostat.c    # Hysteresis control logic
+│   │       ├── thermostat_config.c  # NVS-backed configuration
+│   │       ├── provisioning.c  # Credential storage
+│   │       ├── boot_mode.c     # Boot mode state machine
+│   │       ├── logging.c       # Queue-based logging
+│   │       ├── error.c         # Fatal/non-fatal error handling
+│   │       ├── watchdog.c      # Watchdog stubs
+│   │       └── timeutil.c      # SNTP initialization
 │   │
-│   ├── app_thermostat/             # Application layer (tasks)
+│   ├── app_thermostat/         # Application tasks
 │   │   ├── include/app/
-│   │   │   ├── task_sensors.h      # Temperature acquisition
-│   │   │   ├── task_control.h      # HVAC control logic
-│   │   │   ├── task_display.h      # LCD UI management
-│   │   │   ├── task_net.h          # Network/telemetry
-│   │   │   └── setup_server.h      # Provisioning server
+│   │   │   ├── task_sensors.h  # Temperature acquisition
+│   │   │   ├── task_control.h  # HVAC output control
+│   │   │   ├── task_display.h  # LCD UI rendering
+│   │   │   ├── task_net.h      # WiFi + telemetry
+│   │   │   ├── task_buttons.h  # User input handling
+│   │   │   ├── task_heartbeat.h # LED blink + alive signal
+│   │   │   ├── task_logger.h   # Log consumer task
+│   │   │   ├── task_common.h   # Shared queues
+│   │   │   └── setup_server.h  # Captive portal + web UI
 │   │   └── src/
-│   │       └── ...
+│   │       ├── task_sensors.c  # AHT20 polling @ 500ms
+│   │       ├── task_control.c  # Hysteresis + relay control
+│   │       ├── task_display.c  # LCD refresh loop
+│   │       ├── task_net.c      # WiFi events + HTTP POST
+│   │       ├── task_buttons.c  # Debounce + long-press detection
+│   │       ├── task_heartbeat.c # Status LED
+│   │       ├── task_logger.c   # Colored console output
+│   │       ├── task_common.c   # Queue initialization
+│   │       └── setup_server.c  # SoftAP + DNS + HTTP provisioning
 │   │
-│   └── drivers_thermostat/         # Hardware abstraction layer
+│   └── drivers_thermostat/     # Hardware abstraction
 │       ├── include/drivers/
-│       │   ├── drv_temp_sensors.h  # Temperature sensor driver
-│       │   ├── drv_display.h       # LCD driver (HD44780)
-│       │   └── drv_buttons.h       # Button input driver
+│       │   ├── drv_temp_sensors.h
+│       │   ├── drv_display.h
+│       │   └── drv_buttons.h
 │       └── src/
-│           └── ...
+│           ├── drv_temp_sensors.c  # AHT20 I2C driver
+│           ├── drv_display.c       # HD44780 4-bit driver
+│           └── drv_buttons.c       # GPIO interrupt handler
 │
-├── docs/                           # Documentation
-│   └── ARCHITECTURE.md             # System architecture
+├── docs/
+│   └── ARCHITECTURE.md         # Detailed design documentation
 │
-├── CMakeLists.txt                  # Build configuration
-├── sdkconfig                       # ESP-IDF configuration
-├── LICENSE                         # License file
-└── README.md                       # This file
+├── CMakeLists.txt              # ESP-IDF project file
+├── sdkconfig                   # Menuconfig settings
+├── LICENSE                     # MIT License
+└── README.md                   # This file
 ```
 
 ---
 
-## 🔧 Hardware Requirements
+## Hardware Configuration
 
-| Component | Specification |
-|-----------|--------------|
-| MCU | ESP32-WROOM-32 |
-| Temperature Sensor | AHT20 (I2C) |
-| Display | 16x2 LCD (HD44780, 4-bit mode) |
-| Buttons | 3x Momentary (UP, DOWN, MODE) |
-| Relay Output | Heat/Cool GPIO control |
+### Bill of Materials
 
-### Pin Configuration
+| Component | Part Number | Description |
+|-----------|-------------|-------------|
+| MCU | ESP32-WROOM-32 | Dual-core 240MHz, WiFi+BT |
+| Temp Sensor | AHT20 | I2C, ±0.3°C accuracy |
+| Display | 1602A | 16x2 character LCD (HD44780) |
+| Buttons | Momentary SPST | 3x tactile switches |
+| Relay Module | 5V 2-channel | Heat/Cool output control |
 
-| Function | GPIO |
-|----------|------|
-| I2C SDA | 21 |
-| I2C SCL | 22 |
-| LCD RS | 19 |
-| LCD EN | 18 |
-| LCD D4-D7 | 5, 17, 16, 4 |
-| BTN UP | 25 |
-| BTN DOWN | 26 |
-| BTN MODE | 27 |
-| HEAT OUT | 12 |
-| COOL OUT | 33 |
-| LED | 2 |
+### GPIO Pin Mapping
+
+| Function | GPIO | Notes |
+|----------|------|-------|
+| **I2C SDA** | 21 | AHT20 sensor |
+| **I2C SCL** | 22 | 100kHz clock |
+| **LCD RS** | 19 | Register select |
+| **LCD EN** | 18 | Enable strobe |
+| **LCD D4** | 5 | Data nibble |
+| **LCD D5** | 17 | Data nibble |
+| **LCD D6** | 16 | Data nibble |
+| **LCD D7** | 4 | Data nibble |
+| **BTN UP** | 25 | Increase setpoint |
+| **BTN DOWN** | 26 | Decrease setpoint |
+| **BTN MODE** | 27 | Cycle mode / Settings (5s hold) |
+| **HEAT OUT** | 12 | Heater relay |
+| **COOL OUT** | 33 | Cooler relay |
+| **LED** | 2 | Heartbeat indicator |
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- [ESP-IDF v5.5.1](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
-- Python 3.8+
-- USB-to-Serial adapter
+- **ESP-IDF v5.5.1** - [Installation Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
+- **Python 3.8+** - For ESP-IDF tools
+- **USB-Serial Adapter** - CP2102 or similar
 
-### Build & Flash
+### Build and Flash
 
 ```bash
-# Set up ESP-IDF environment
-. $HOME/esp/esp-idf/export.sh
+# Clone the repository
+git clone https://github.com/gonzalopatino/ESP32_FreeRTOS_Thermostat.git
+cd thermostat
 
-# Build the project
+# Set up ESP-IDF environment (Windows)
+%IDF_PATH%\export.bat
+
+# Set up ESP-IDF environment (Linux/macOS)
+. $IDF_PATH/export.sh
+
+# Build the firmware
 idf.py build
 
-# Flash to device
-idf.py -p /dev/ttyUSB0 flash
+# Flash to ESP32 (adjust COM port)
+idf.py -p COM6 flash
 
 # Monitor serial output
-idf.py -p /dev/ttyUSB0 monitor
+idf.py -p COM6 monitor
+
+# Build + Flash + Monitor in one command
+idf.py -p COM6 flash monitor
 ```
 
-### First-Time Setup
+### First Boot: WiFi Provisioning
 
-1. Power on the device
-2. Scan the QR code displayed on the LCD
-3. Connect to the device's WiFi AP
-4. Enter your home WiFi credentials
-5. Device will connect and begin normal operation
+1. **Power on** the device - LCD shows "Setup Mode"
+2. **Scan QR code** displayed on LCD with your phone
+3. **Connect** to the ESP32's WiFi AP (e.g., `THERMO_XXXX`)
+4. **Enter PIN** shown on LCD for security
+5. **Configure** your home WiFi SSID and password
+6. **Submit** - Device connects and enters normal operation
+
+### Normal Operation
+
+- **Temperature Display**: Current temp and setpoint on LCD
+- **UP/DOWN Buttons**: Adjust setpoint in 0.5°C steps (15-28°C range)
+- **MODE Button**: Short press cycles Heat→Cool→Off→Auto
+- **Settings Mode**: Hold MODE for 5 seconds to enter web configuration
 
 ---
 
-## 📊 Architecture
+## Configuration
 
-The firmware follows a **layered architecture** pattern:
+All compile-time settings are in `components/core/include/core/config.h`:
 
-```
-┌─────────────────────────────────────────────────┐
-│                 Application Layer               │
-│  (Tasks: Sensors, Control, Display, Network)    │
-├─────────────────────────────────────────────────┤
-│                   Core Layer                    │
-│  (Thermostat Logic, Config, Logging, Error)     │
-├─────────────────────────────────────────────────┤
-│            Hardware Abstraction Layer           │
-│     (Drivers: Sensors, Display, Buttons)        │
-├─────────────────────────────────────────────────┤
-│              FreeRTOS / ESP-IDF                 │
-│         (RTOS, WiFi, NVS, HTTP Server)          │
-└─────────────────────────────────────────────────┘
-```
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `THERMOSTAT_SETPOINT_C` | 22.0 | Default setpoint (°C) |
+| `THERMOSTAT_HYSTERESIS_C` | 0.5 | Deadband (±°C) |
+| `THERMOSTAT_SP_MIN_C` | 15.0 | Minimum setpoint |
+| `THERMOSTAT_SP_MAX_C` | 28.0 | Maximum setpoint |
+| `PERIOD_SENSORS_MS` | 500 | Sensor polling rate |
+| `TELEMETRY_PERIOD_MS` | 15000 | Cloud upload interval |
 
 ---
 
-## 📝 Coding Standards
+## Telemetry API
+
+The device sends JSON telemetry to a configurable backend:
+
+```json
+{
+  "device_serial": "SN-ESP32-THERO-004",
+  "temperature_c": 22.5,
+  "humidity_pct": 45.0,
+  "setpoint_c": 22.0,
+  "mode": "HEAT",
+  "output": "ON",
+  "uptime_sec": 3600
+}
+```
+
+**Endpoint:** `POST /api/telemetry/ingest/`  
+**Authentication:** HMAC-SHA256 signed requests
+
+---
+
+## Development
+
+### Code Style
 
 - **Language**: C17 (GNU extensions)
-- **Style**: K&R with 4-space indentation
-- **Documentation**: Doxygen-compatible comments
-- **Naming**: 
-  - Functions: `module_action_object()` (e.g., `thermostat_set_mode()`)
+- **Formatting**: 4-space indentation, K&R braces
+- **Comments**: Doxygen-compatible (`@brief`, `@param`, `@return`)
+- **Naming Conventions**:
+  - Functions: `module_verb_noun()` (e.g., `thermostat_set_mode()`)
   - Types: `module_name_t` (e.g., `thermostat_state_t`)
-  - Constants: `UPPER_SNAKE_CASE`
-  - Static variables: `s_name`
+  - Macros: `UPPER_SNAKE_CASE`
+  - Static vars: `s_` prefix
+  - Global vars: `g_` prefix
+
+### Task Architecture
+
+| Task | Priority | Stack | Period | Role |
+|------|----------|-------|--------|------|
+| Logger | 5 | 4KB | 50ms | Console output |
+| Control | 5 | 4KB | Event | Relay control |
+| Sensors | 4 | 4KB | 500ms | AHT20 polling |
+| Network | 4 | 4KB | 15s | Telemetry POST |
+| Buttons | 4 | 4KB | Event | Input handling |
+| Display | 3 | 4KB | 200ms | LCD refresh |
+| Heartbeat | 3 | 4KB | 1s | LED blink |
 
 ---
 
-## 📄 License
+## License
 
-Copyright © 2024-2025 ThinkSense Labs. All rights reserved.
+```
+MIT License
 
-This software is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited.
+Copyright (c) 2024-2025 ThinkSense Labs
+Author: Gonzalo Patino
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software...
+```
+
+See [LICENSE](LICENSE) for full text.
 
 ---
 
-## 📞 Contact
+## Contact
 
-**ThinkSense Labs**  
-Email: gonzalo@thinksense.io  
-Website: https://thinksense.io
+**Gonzalo Patino**  
+ThinkSense Labs  
+
+📧 gonzalo@thinksense.io  
+🌐 https://thinksense.io  
+💻 https://github.com/gonzalopatino
 
 ---
+
+<p align="center">
+  <em>Built with ❤️ for the IoT community</em>
+</p>
 
 *Built with ❤️ by ThinkSense Labs*
