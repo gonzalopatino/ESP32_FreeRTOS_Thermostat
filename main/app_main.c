@@ -114,45 +114,122 @@ static void start_setup_mode(void) {
         }
     }
 
-    // Get the actual AP SSID to display
+    // Get the SSID and PIN to display
     char ap_ssid[33];
     setup_server_get_ssid(ap_ssid, sizeof(ap_ssid));
+    const char *pin = setup_server_get_pin();
     
     printf("============================================\n");
     printf("  FIRST-TIME SETUP READY\n");
     printf("  \n");
-    printf("  Connect to WiFi: %s\n", ap_ssid);
-    printf("  Then open: http://192.168.4.1\n");
+    printf("  1. Connect to WiFi: %s\n", ap_ssid);
+    printf("  2. Browser will open automatically\n");
+    printf("  3. Enter PIN: %s\n", pin);
     printf("============================================\n");
 
-    // Initialize LCD and show setup mode message with actual SSID
+    // Initialize LCD and show SSID on line 1, PIN on line 2
     if (drv_display_init() == APP_ERR_OK) {
         drv_display_clear();
-        drv_display_write_line(0, "** SETUP MODE **");
         
-        // Show shortened SSID (LCD is 16 chars wide)
+        // Line 1: Show shortened SSID (LCD is 16 chars wide)
         // SSID format: "ThinkSenseThermo-XXXX" (21 chars)
         // We'll show: "Thermo-XXXX" (11 chars) which fits in 16-char LCD
-        char lcd_ssid[17] = {0};
+        char lcd_line1[17] = {0};
         size_t ap_len = strlen(ap_ssid);
-        // Skip "ThinkSense" prefix (10 chars) if present
         const char *short_ssid = (ap_len > 10) ? (ap_ssid + 10) : ap_ssid;
-        // Truncate to fit LCD width (16 chars)
-        strncpy(lcd_ssid, short_ssid, sizeof(lcd_ssid) - 1);
-        drv_display_write_line(1, lcd_ssid);
+        strncpy(lcd_line1, short_ssid, sizeof(lcd_line1) - 1);
+        drv_display_write_line(0, lcd_line1);
         
-        log_post(LOG_LEVEL_INFO, "SETUP", "LCD showing: %s", lcd_ssid);
+        // Line 2: Show PIN prominently (format: "PIN: XXXX")
+        char lcd_line2[17];
+        snprintf(lcd_line2, sizeof(lcd_line2), "PIN: %s", pin);
+        drv_display_write_line(1, lcd_line2);
+        
+        log_post(LOG_LEVEL_INFO, "SETUP", "LCD: %s / %s", lcd_line1, lcd_line2);
     } else {
         log_post(LOG_LEVEL_ERROR, "SETUP", "LCD init failed");
     }
 
     log_post(LOG_LEVEL_INFO, "SETUP", "Setup server running - connect to %s", ap_ssid);
-    log_post(LOG_LEVEL_INFO, "SETUP", "Open http://192.168.4.1 in browser");
+    log_post(LOG_LEVEL_INFO, "SETUP", "Security PIN: %s", pin);
 
-    // Keep the main task alive - the HTTP server runs in its own context
-    // In the future, this could monitor for setup completion and reboot
+    // Monitor for setup completion - poll for connect request
     while (1) {
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        // Check if user has submitted WiFi credentials and requested connection
+        if (setup_server_connect_pending()) {
+            log_post(LOG_LEVEL_INFO, "SETUP", "WiFi connection requested, switching to STA mode...");
+            
+            // Show connecting status on LCD
+            drv_display_clear();
+            drv_display_write_line(0, "Connecting...");
+            
+            // Perform the WiFi mode switch
+            char ip_addr[16] = {0};
+            app_error_t wifi_err = setup_server_connect_wifi(ip_addr, sizeof(ip_addr));
+            
+            if (wifi_err == APP_ERR_OK) {
+                log_post(LOG_LEVEL_INFO, "SETUP", "Connected! IP: %s", ip_addr);
+                
+                // Store IP for use in Step 3 page
+                setup_server_set_device_ip(ip_addr);
+                
+                // Show IP address on LCD for user to find the device
+                drv_display_clear();
+                drv_display_write_line(0, "Open browser:");
+                drv_display_write_line(1, ip_addr);
+                
+                printf("============================================\n");
+                printf("  WiFi CONNECTED!\n");
+                printf("  \n");
+                printf("  Device IP: %s\n", ip_addr);
+                printf("  \n");
+                printf("  Open this IP in your browser to\n");
+                printf("  complete API key setup.\n");
+                printf("============================================\n");
+                
+                // Start HTTP server on STA for Step 3 (API key entry)
+                if (setup_server_start_step3() != APP_ERR_OK) {
+                    log_post(LOG_LEVEL_ERROR, "SETUP", "Failed to start Step 3 server");
+                    drv_display_clear();
+                    drv_display_write_line(0, "Server Error!");
+                    drv_display_write_line(1, "Restart device");
+                    while (1) { vTaskDelay(pdMS_TO_TICKS(1000)); }
+                }
+                
+                // Monitor for API key completion
+                while (!setup_server_api_key_complete()) {
+                    vTaskDelay(pdMS_TO_TICKS(500));
+                }
+                
+                // Mark provisioning as complete so next boot enters normal mode
+                if (provisioning_mark_complete() != APP_ERR_OK) {
+                    log_post(LOG_LEVEL_ERROR, "SETUP", "Failed to mark provisioning complete!");
+                }
+                
+                // API key received - setup complete!
+                log_post(LOG_LEVEL_INFO, "SETUP", "Setup complete! Rebooting to normal mode...");
+                drv_display_clear();
+                drv_display_write_line(0, "Setup Complete!");
+                drv_display_write_line(1, "Rebooting...");
+                
+                vTaskDelay(pdMS_TO_TICKS(2000));
+                esp_restart();
+                
+            } else {
+                log_post(LOG_LEVEL_ERROR, "SETUP", "WiFi connection failed!");
+                
+                // Show error and wait for restart
+                drv_display_clear();
+                drv_display_write_line(0, "WiFi FAILED!");
+                drv_display_write_line(1, "Restart device");
+                
+                while (1) {
+                    vTaskDelay(pdMS_TO_TICKS(1000));
+                }
+            }
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(500));  // Poll every 500ms
     }
 }
 

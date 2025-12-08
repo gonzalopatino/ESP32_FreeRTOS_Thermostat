@@ -79,6 +79,64 @@ app_error_t setup_server_get_ssid(char *ssid_buf, size_t buf_len);
  */
 bool setup_server_is_complete(void);
 
+/**
+ * @brief Get the security PIN displayed on the device LCD.
+ *
+ * The PIN is randomly generated when the setup server starts.
+ * User must enter this PIN in the browser to access the setup wizard.
+ *
+ * @return 4-digit PIN string (e.g., "1234").
+ */
+const char* setup_server_get_pin(void);
+
+/**
+ * @brief Check if WiFi connection has been requested.
+ *
+ * Call this periodically from the main loop to detect when
+ * the user has submitted WiFi credentials and requested connection.
+ *
+ * @return true if connection is pending.
+ */
+bool setup_server_connect_pending(void);
+
+/**
+ * @brief Perform the WiFi mode switch from AP to STA.
+ *
+ * This function:
+ *   1. Stops the setup server (HTTP + DNS)
+ *   2. Disconnects the SoftAP
+ *   3. Connects to the home WiFi using saved credentials
+ *
+ * @param[out] ip_addr   Buffer to store assigned IP (min 16 bytes), or NULL.
+ * @param[in]  buf_len   Size of IP buffer.
+ * @return APP_ERR_OK on successful connection, error code on failure.
+ */
+app_error_t setup_server_connect_wifi(char *ip_addr, size_t buf_len);
+
+/**
+ * @brief Start HTTP server on STA mode for Step 3 (API key setup).
+ *
+ * Call this after setup_server_connect_wifi() succeeds.
+ * Starts an HTTP server on the home network to serve the API key entry page.
+ *
+ * @return APP_ERR_OK on success.
+ */
+app_error_t setup_server_start_step3(void);
+
+/**
+ * @brief Set the device IP address for display in Step 3 page.
+ *
+ * @param ip  The IP address string (e.g., "10.0.0.166").
+ */
+void setup_server_set_device_ip(const char *ip);
+
+/**
+ * @brief Check if API key setup is complete.
+ *
+ * @return true if API key has been configured via Step 3.
+ */
+bool setup_server_api_key_complete(void);
+
 #ifdef __cplusplus
 }
 #endif
