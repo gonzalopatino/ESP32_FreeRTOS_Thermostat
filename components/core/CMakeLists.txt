@@ -7,6 +7,7 @@ idf_component_register(
         "src/thermostat.c"
         "src/timeutil.c"
         "src/provisioning.c"
+        "src/boot_mode.c"
     INCLUDE_DIRS "include"
     REQUIRES
         freertos
@@ -15,4 +16,5 @@ idf_component_register(
         lwip
         esp_netif
         nvs_flash
+        driver
 )

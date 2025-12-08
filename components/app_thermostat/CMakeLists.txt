@@ -8,6 +8,7 @@ idf_component_register(
         "src/task_display.c"
         "src/task_buttons.c"
         "src/task_net.c"
+        "src/setup_server.c"
     INCLUDE_DIRS "include"
     REQUIRES 
         core
@@ -18,6 +19,7 @@ idf_component_register(
         esp_netif
         nvs_flash
         esp_http_client 
+        esp_http_server
         esp_system
         mbedtls
         
