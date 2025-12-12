@@ -20,6 +20,7 @@
 #include "app/api_server.h"
 #include "core/logging.h"
 #include "core/thermostat_config.h"
+#include "core/thermostat.h"
 
 #include "esp_http_server.h"
 #include "cJSON.h"
@@ -66,6 +67,33 @@ static esp_err_t send_error_response(httpd_req_t *req, int status, const char *m
     return httpd_resp_send(req, body, strlen(body));
 }
 
+/**
+ * @brief Convert mode enum to string.
+ */
+static const char* mode_to_string(thermostat_mode_t mode)
+{
+    switch (mode) {
+        case THERMOSTAT_MODE_OFF:  return "OFF";
+        case THERMOSTAT_MODE_HEAT: return "HEAT";
+        case THERMOSTAT_MODE_COOL: return "COOL";
+        case THERMOSTAT_MODE_AUTO: return "AUTO";
+        default:                   return "UNKNOWN";
+    }
+}
+
+/**
+ * @brief Convert string to mode enum.
+ * @return -1 if invalid mode string
+ */
+static int string_to_mode(const char *str)
+{
+    if (strcasecmp(str, "OFF") == 0)  return THERMOSTAT_MODE_OFF;
+    if (strcasecmp(str, "HEAT") == 0) return THERMOSTAT_MODE_HEAT;
+    if (strcasecmp(str, "COOL") == 0) return THERMOSTAT_MODE_COOL;
+    if (strcasecmp(str, "AUTO") == 0) return THERMOSTAT_MODE_AUTO;
+    return -1;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * HTTP HANDLERS
  * ═══════════════════════════════════════════════════════════════════════════ */
@@ -76,7 +104,8 @@ static esp_err_t send_error_response(httpd_req_t *req, int status, const char *m
  * Response:
  * {
  *   "setpoint_c": 22.0,
- *   "hysteresis_c": 0.5
+ *   "hysteresis_c": 0.5,
+ *   "mode": "HEAT"
  * }
  */
 static esp_err_t handler_get_config(httpd_req_t *req)
@@ -91,11 +120,17 @@ static esp_err_t handler_get_config(httpd_req_t *req)
         return send_error_response(req, 500, "Failed to get config");
     }
 
+    // Get current mode
+    thermostat_mode_t mode;
+    if (thermostat_get_mode(&mode) != APP_ERR_OK) {
+        mode = THERMOSTAT_MODE_OFF;  // Default fallback
+    }
+
     // Build JSON response
-    char json_body[128];
+    char json_body[192];
     int len = snprintf(json_body, sizeof(json_body),
-        "{\"setpoint_c\":%.2f,\"hysteresis_c\":%.2f}",
-        cfg.setpoint_c, cfg.hysteresis_c);
+        "{\"setpoint_c\":%.2f,\"hysteresis_c\":%.2f,\"mode\":\"%s\"}",
+        cfg.setpoint_c, cfg.hysteresis_c, mode_to_string(mode));
 
     if (len <= 0 || len >= (int)sizeof(json_body)) {
         return send_error_response(req, 500, "JSON build error");
@@ -114,14 +149,16 @@ static esp_err_t handler_get_config(httpd_req_t *req)
  * Request body:
  * {
  *   "setpoint_c": 23.0,      // optional
- *   "hysteresis_c": 0.5      // optional
+ *   "hysteresis_c": 0.5,     // optional
+ *   "mode": "HEAT"           // optional: OFF, HEAT, COOL, AUTO
  * }
  *
  * Response:
  * {
  *   "status": "ok",
  *   "setpoint_c": 23.0,
- *   "hysteresis_c": 0.5
+ *   "hysteresis_c": 0.5,
+ *   "mode": "HEAT"
  * }
  */
 static esp_err_t handler_post_config(httpd_req_t *req)
@@ -202,6 +239,27 @@ static esp_err_t handler_post_config(httpd_req_t *req)
         }
     }
 
+    // Handle mode update
+    thermostat_mode_t current_mode;
+    thermostat_get_mode(&current_mode);
+
+    cJSON *mode_json = cJSON_GetObjectItem(json, "mode");
+    if (mode_json && cJSON_IsString(mode_json)) {
+        int new_mode = string_to_mode(mode_json->valuestring);
+        if (new_mode >= 0) {
+            if (thermostat_set_mode((thermostat_mode_t)new_mode) == APP_ERR_OK) {
+                current_mode = (thermostat_mode_t)new_mode;
+                log_post(LOG_LEVEL_INFO, TAG, "Mode updated to %s", mode_to_string(current_mode));
+            } else {
+                cJSON_Delete(json);
+                return send_error_response(req, 500, "Failed to set mode");
+            }
+        } else {
+            cJSON_Delete(json);
+            return send_error_response(req, 400, "Invalid mode (use OFF, HEAT, COOL, or AUTO)");
+        }
+    }
+
     cJSON_Delete(json);
 
     // Apply new config if changed
@@ -214,11 +272,11 @@ static esp_err_t handler_post_config(httpd_req_t *req)
                  cfg.setpoint_c, cfg.hysteresis_c);
     }
 
-    // Build success response
-    char json_resp[128];
+    // Build success response with mode
+    char json_resp[192];
     int len = snprintf(json_resp, sizeof(json_resp),
-        "{\"status\":\"ok\",\"setpoint_c\":%.2f,\"hysteresis_c\":%.2f}",
-        cfg.setpoint_c, cfg.hysteresis_c);
+        "{\"status\":\"ok\",\"setpoint_c\":%.2f,\"hysteresis_c\":%.2f,\"mode\":\"%s\"}",
+        cfg.setpoint_c, cfg.hysteresis_c, mode_to_string(current_mode));
 
     httpd_resp_set_type(req, "application/json");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
