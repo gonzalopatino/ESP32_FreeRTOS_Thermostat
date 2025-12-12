@@ -38,6 +38,7 @@
 #include "core/provisioning.h"
 
 #include "app/task_common.h"
+#include "app/api_server.h"
 
 /* ═══════════════════════════════════════════════════════════════════════════
  * PRIVATE VARIABLES
@@ -48,6 +49,9 @@ static const char *TAG = "NET";
 static int        s_retry_count        = 0;
 static bool       s_wifi_ready         = false;
 static TickType_t s_last_telemetry_tick = 0;
+
+// Device's current IP address (updated on WiFi connect)
+static char s_device_ip[16] = {0};  // "xxx.xxx.xxx.xxx"
 
 
 
@@ -151,7 +155,7 @@ static void net_send_telemetry(const thermostat_state_t *state)
              TH_API_INGEST_PATH);
 
     // Build JSON body – note: no device_id field, server trusts Authorization header
-    char json_body[256];
+    char json_body[320];
     int len = snprintf(
         json_body,
         sizeof(json_body),
@@ -162,7 +166,8 @@ static void net_send_telemetry(const thermostat_state_t *state)
           "\"setpoint_c\":%.2f,"
           "\"hysteresis_c\":%.2f,"
           "\"output\":\"%s\","
-          "\"timestamp\":\"%s\""
+          "\"timestamp\":\"%s\","
+          "\"device_ip\":\"%s\""
         "}",
         mode_to_str(state->mode),
         state->tin_c,
@@ -170,7 +175,8 @@ static void net_send_telemetry(const thermostat_state_t *state)
         state->setpoint_c,
         state->hysteresis_c,
         output_to_str(state->output),
-        ts_buf
+        ts_buf,
+        s_device_ip
     );
 
     if (len <= 0 || len >= (int)sizeof(json_body)) {
@@ -248,12 +254,25 @@ static void wifi_event_handler(void *arg,
         }
 
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        log_post(LOG_LEVEL_INFO, TAG, "Wi-Fi connected, got IP address");
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        
+        // Store the device's IP address for telemetry
+        snprintf(s_device_ip, sizeof(s_device_ip), IPSTR, IP2STR(&event->ip_info.ip));
+        
+        log_post(LOG_LEVEL_INFO, TAG, "Wi-Fi connected, IP: %s", s_device_ip);
         log_post(LOG_LEVEL_INFO, TAG, "Starting SNTP...");
         timeutil_init_sntp();
         s_retry_count    = 0;
         s_wifi_ready     = true;
         s_last_telemetry_tick  = 0;  // force immediate send once time is set
+
+        // Start the runtime API server for remote configuration
+        if (!api_server_is_running()) {
+            log_post(LOG_LEVEL_INFO, TAG, "Starting API server...");
+            if (api_server_start() != APP_ERR_OK) {
+                log_post(LOG_LEVEL_ERROR, TAG, "Failed to start API server");
+            }
+        }
     }
 }
 

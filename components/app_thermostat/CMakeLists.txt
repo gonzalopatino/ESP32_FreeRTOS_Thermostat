@@ -9,6 +9,7 @@ idf_component_register(
         "src/task_buttons.c"
         "src/task_net.c"
         "src/setup_server.c"
+        "src/api_server.c"
     INCLUDE_DIRS "include"
     REQUIRES 
         core
@@ -22,5 +23,5 @@ idf_component_register(
         esp_http_server
         esp_system
         mbedtls
-        
+        json
 )
