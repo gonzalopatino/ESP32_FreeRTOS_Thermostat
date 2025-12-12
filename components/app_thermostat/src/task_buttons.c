@@ -38,6 +38,7 @@
 
 #include "app/task_buttons.h"
 #include "app/setup_server.h"
+#include "app/api_server.h"
 
 #include <string.h>
 
@@ -187,6 +188,11 @@ static bool check_mode_long_press(void)
     }
     
     // Button held for full duration - settings mode!
+    log_post(LOG_LEVEL_INFO, TAG, "Long press complete - triggering settings mode");
+    drv_display_clear();
+    drv_display_write_line(0, "Long press OK!");
+    drv_display_write_line(1, "Entering setup");
+    vTaskDelay(pdMS_TO_TICKS(500));
     return true;
 }
 
@@ -201,12 +207,31 @@ static void enter_settings_mode(void)
     
     drv_display_clear();
     drv_display_write_line(0, "Settings Mode");
+    drv_display_write_line(1, "Stopping API...");
+    
+    // Stop the API server first (it uses port 80)
+    if (api_server_is_running()) {
+        log_post(LOG_LEVEL_INFO, TAG, "Stopping API server for settings mode");
+        api_server_stop();
+        // Wait longer for socket to fully close
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+    
     drv_display_write_line(1, "Starting AP...");
     
-    // Start settings server (AP + STA mode)
-    app_error_t err = setup_server_start_settings(NULL);
+    // Start settings server (AP + STA mode) with retry
+    app_error_t err = APP_ERR_OK;
+    for (int attempt = 0; attempt < 3; attempt++) {
+        err = setup_server_start_settings(NULL);
+        if (err == APP_ERR_OK) {
+            break;
+        }
+        log_post(LOG_LEVEL_WARN, TAG, "Settings server start attempt %d failed, retrying...", attempt + 1);
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+    
     if (err != APP_ERR_OK) {
-        log_post(LOG_LEVEL_ERROR, TAG, "Failed to start settings mode!");
+        log_post(LOG_LEVEL_ERROR, TAG, "Failed to start settings mode after retries!");
         drv_display_clear();
         drv_display_write_line(0, "Settings Error!");
         drv_display_write_line(1, "Try again");

@@ -28,6 +28,7 @@
 
 #include "app/task_common.h"
 #include "app/task_display.h"
+#include "app/setup_server.h"
 
 #include "drivers/drv_display.h"
 
@@ -60,6 +61,12 @@ static void task_display(void *arg)
     while (1) {
         // Block until CONTROL publishes a new state
         if (xQueueReceive(g_q_thermostat_state, &state, portMAX_DELAY) == pdTRUE) {
+
+            // Skip LCD updates if in settings mode (buttons task controls LCD)
+            if (setup_server_is_settings_mode()) {
+                watchdog_feed();
+                continue;
+            }
 
             log_post(LOG_LEVEL_DEBUG, TAG,
                      "DISPLAY got state: Tin=%.2f Tout=%.2f sp=%.2f hyst=%.2f out=%d",
