@@ -30,9 +30,11 @@ ThermostatRTOS is a professional embedded firmware for smart thermostat applicat
 |---------|-------------|
 | **Multi-Mode Control** | Heat, Cool, Auto, and Off operating modes |
 | **Hysteresis Regulation** | Configurable ±0.5°C deadband prevents relay chatter |
+| **Local API Server** | HTTP REST API for remote configuration (setpoint, hysteresis, mode) |
 | **WiFi Provisioning** | Captive portal for initial WiFi setup, displays IP on LCD |
 | **QR Code Commissioning** | Dashboard generates QR code with device IP for phone-based API key provisioning |
 | **Cloud Telemetry** | HTTP POST to backend every 15 seconds with signed payloads |
+| **Automatic IP Reporting** | Device IP address included in telemetry for dashboard auto-detection |
 | **Settings Mode** | Hold MODE 5s for runtime WiFi/API reconfiguration via web UI |
 | **NVS Persistence** | Setpoint, credentials, and config survive power cycles |
 | **Watchdog Monitoring** | Task health supervision with automatic recovery |
@@ -110,7 +112,8 @@ thermostat/
 │   │   │   ├── task_heartbeat.h # LED blink + alive signal
 │   │   │   ├── task_logger.h   # Log consumer task
 │   │   │   ├── task_common.h   # Shared queues
-│   │   │   └── setup_server.h  # Captive portal + web UI
+│   │   │   ├── setup_server.h  # Captive portal + web UI
+│   │   │   └── api_server.h    # Local HTTP API for remote config
 │   │   └── src/
 │   │       ├── task_sensors.c  # AHT20 polling @ 500ms
 │   │       ├── task_control.c  # Hysteresis + relay control
@@ -120,7 +123,8 @@ thermostat/
 │   │       ├── task_heartbeat.c # Status LED
 │   │       ├── task_logger.c   # Colored console output
 │   │       ├── task_common.c   # Queue initialization
-│   │       └── setup_server.c  # SoftAP + DNS + HTTP provisioning
+│   │       ├── setup_server.c  # SoftAP + DNS + HTTP provisioning
+│   │       └── api_server.c    # REST API: GET/POST /api/config
 │   │
 │   └── drivers_thermostat/     # Hardware abstraction
 │       ├── include/drivers/
@@ -266,14 +270,77 @@ The device sends JSON telemetry to a configurable backend:
   "temperature_c": 22.5,
   "humidity_pct": 45.0,
   "setpoint_c": 22.0,
+  "hysteresis_c": 0.5,
   "mode": "HEAT",
   "output": "ON",
+  "device_ip": "192.168.1.100",
   "uptime_sec": 3600
 }
 ```
 
 **Endpoint:** `POST /api/telemetry/ingest/`  
 **Authentication:** HMAC-SHA256 signed requests
+
+**Note:** The `device_ip` field enables the dashboard to auto-detect the device's local IP address for the Remote Configuration feature.
+
+---
+
+## Local API Server
+
+The ESP32 runs a local HTTP server that allows remote configuration from the web dashboard or any HTTP client on the local network.
+
+### Endpoint: `GET /api/config`
+
+Retrieve current thermostat configuration.
+
+**Response:**
+```json
+{
+  "setpoint_c": 22.0,
+  "hysteresis_c": 0.5,
+  "mode": "HEAT"
+}
+```
+
+### Endpoint: `POST /api/config`
+
+Update thermostat configuration. All fields are optional.
+
+**Request:**
+```json
+{
+  "setpoint_c": 23.5,
+  "hysteresis_c": 0.8,
+  "mode": "AUTO"
+}
+```
+
+**Mode Values:** `OFF`, `HEAT`, `COOL`, `AUTO`
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "setpoint_c": 23.5,
+  "hysteresis_c": 0.8,
+  "mode": "AUTO"
+}
+```
+
+**Error Response:**
+```json
+{
+  "status": "error",
+  "message": "Invalid mode: INVALID"
+}
+```
+
+### CORS Support
+
+The API server includes CORS headers to allow requests from the web dashboard:
+- `Access-Control-Allow-Origin: *`
+- `Access-Control-Allow-Methods: GET, POST, OPTIONS`
+- `Access-Control-Allow-Headers: Content-Type`
 
 ---
 
